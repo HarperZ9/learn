@@ -7,6 +7,8 @@ import { run } from "./runtime/runner.mjs";
 import { loadWorkflow, STEP_KINDS } from "./workflow/schema.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
 import "./adapters/fake.mjs";
+import { telosRender, toAidLedgerEntry } from "./interop/telos.mjs";
+import { buildReceipt } from "./receipt/receipt.mjs";
 
 export async function doctor() {
   const checks = [];
@@ -30,6 +32,16 @@ export async function doctor() {
   // 4. ledger tamper is detected
   const l = new Ledger(); l.append({ a: 1 }); l.append({ a: 2 }); l.entries()[0].entry.a = 9;
   add("ledger.tamper_detected", l.verify().ok === false);
+
+  // 5. telos render is fail-closed with no engine configured (never throws, tagged aid)
+  const fc = telosRender("x.json", { cmd: "" });
+  add("telos.render_fail_closed", fc.ran === false && fc.verdict === "UNVERIFIABLE" && fc.provenance === "aid");
+
+  // 6. an aid render is filed under aidVisualizations and NEVER as graded work
+  const al = new Ledger();
+  al.append(toAidLedgerEntry({ verdict: "MATCH", result_hash: "sha256:b" }, { concept: "probe", seq: 0 }));
+  const rj = buildReceipt({ workflow: { course: "d", seal: "s" }, ledger: al, completion: null }).json;
+  add("receipt.aid_never_graded", rj.aidVisualizations.length === 1 && rj.humanAssessments.length === 0 && rj.witnessedAutoSubmissions.length === 0);
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };

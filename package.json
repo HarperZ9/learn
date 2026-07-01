@@ -1,6 +1,6 @@
 {
   "name": "learn",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "type": "module",
   "description": "Accountable credential & coursework engine — automates course logistics, halts at every graded step for the human, and emits a tamper-evident receipt of how a credential was earned. Learning aid, not a bypass.",
   "license": "LicenseRef-fair-source",
