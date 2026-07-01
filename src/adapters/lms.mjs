@@ -36,6 +36,28 @@ const PLATFORMS = {
     assessmentLabel: "none (badge wallet)",
     captureKind: "dom",
   },
+  "microsoft-learn": {
+    // learn.microsoft.com/training — free self-paced modules; "knowledge checks" flagged as assess.
+    // (Certification EXAMS like AZ-900 are proctored/paid and are NOT driven by this engine at all.)
+    nextSelector: 'button[data-bi-name="next"], .next-section a, a[data-bi-name="unit-next"]',
+    assessmentSelector: '.knowledge-check, [data-bi-name="knowledge-check"]',
+    assessmentLabel: "Microsoft Learn knowledge check",
+    captureKind: "dom",
+  },
+  nonprofitready: {
+    // nonprofitready.org — free self-paced courses + certificates; end-of-course quizzes flagged.
+    nextSelector: 'button.continue, a.next, .lesson-next',
+    assessmentSelector: '.quiz, .assessment, .test',
+    assessmentLabel: "NonprofitReady course quiz",
+    captureKind: "dom",
+  },
+  selfpaced: {
+    // Generic self-paced fallback (Stanford free / UMich non-hosted / misc): mark-complete + next.
+    nextSelector: 'button.next, a.next, [aria-label*="Next" i]',
+    assessmentSelector: '.quiz, .assessment, .exam',
+    assessmentLabel: "graded step (verify selector per course)",
+    captureKind: "dom",
+  },
 };
 
 for (const [name, config] of Object.entries(PLATFORMS)) {
