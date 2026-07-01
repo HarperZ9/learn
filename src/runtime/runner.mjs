@@ -44,6 +44,9 @@ export async function run(workflow, { driver, allowIrreversible = false, submiss
       const obs = observe({ organ: "actuation", subject: step.kind + ":" + (step.target ?? ""), summary: res.payload,
         payload: JSON.stringify({ before, res, after }), data: { url: after.url } });
       const entry = { kind: "step", seq: i, stepKind: step.kind, digest: obs.digest, summary: res.payload };
+      if (res.evidenceRef) {
+        entry.evidenceRef = res.evidenceRef;
+      }
       if (step.kind === "submit") {
         // Witnessed automated submission: record the mode + a digest of the exact pre-submit page
         // state, so the receipt proves what was submitted and that the operator authorized it.
