@@ -23,6 +23,14 @@ export function recordAttempt(session, { objective, prompt, answer, correct, fee
   return session;
 }
 
+// Attach an AID render (from telosRender) to the study log. Renders help the operator SEE the
+// concept; they NEVER count toward mastery — mastery() reads only session.attempts.
+export function recordVisualization(session, { objective, render }) {
+  if (!session.visualizations) session.visualizations = [];
+  session.visualizations.push({ objective, render });
+  return session;
+}
+
 // Mastery-gate: ready only when EVERY objective has >= minAttempts and >= threshold accuracy.
 export function mastery(session, { threshold = 0.8, minAttempts = 3 } = {}) {
   const perObjective = (session.objectives.length ? session.objectives : [...new Set(session.attempts.map((a) => a.objective))])
@@ -53,5 +61,6 @@ export function masteryReceipt(session) {
     ledgerVerified: ledger.verify().ok,
     boundary: "Practice only — the operator solved these; the real graded assessment is taken by the operator, not the tutor.",
     entries: ledger.entries(),
+    visualizations: session.visualizations || [],
   };
 }
