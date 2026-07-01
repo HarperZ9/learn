@@ -15,15 +15,14 @@ The README hero image and mark in this folder were authored on 2026-06-30 as par
   for the headline; `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` for the eyebrow and
   tagline rows), the same stack choice as gather/crucible/forum/index/telos. No purchased or
   bundled font file is required or shipped.
-- PNG fallback: `docs/brand/learn-hero.png` is rasterized by `docs/brand/render-hero-png.mjs`, a
-  small zero-dependency Node script (only `node:zlib` for deflate and `node:fs`/`node:path` for
-  I/O; no canvas library, no image package, no external renderer). It draws the same composition
-  as the SVG (background, rule lines, the book+checkmark motif, and a ghost wordmark) directly to
-  RGB pixels and encodes them as a PNG by hand. Because a true SVG-to-raster pipeline needs a real
-  rendering engine or a font-shaping dependency, and `learn` stays zero-dependency, the PNG's text
-  is drawn with a small hand-authored 5x7 bitmap font rather than the SVG's actual font glyphs.
-  This is an honest, purpose-built rasterizer for this one composition, not a general SVG renderer.
-  Regenerate it with `node docs/brand/render-hero-png.mjs` from the repo root.
+- PNG hero: `docs/brand/learn-hero.png` is rendered by the shared Project Telos brand renderer
+  `project-telos.brand-render/v2` (`telos/tools/render_flagship_heroes.py`, Pillow), the same
+  pipeline that produces the gather, crucible, index, forum, and telos heroes, using the
+  operator-owned Kilon (display) and Conso (mono) font packages rendered locally. The public
+  repository carries only the exported PNG, not the purchased font files. The `learn` brand entry
+  lives in `docs/brand/brand-config.json` in this repo; regenerate from a telos checkout with
+  `python ../telos/tools/render_flagship_heroes.py --render --config ../learn/docs/brand/brand-config.json --public-root ..`
+  (the same renderer and Kilon/Conso font packages the other flagship heroes use).
 - Accessibility floor: both SVGs carry `role="img"`, an `aria-label`, a `<title>`, and a `<desc>`,
   each stating the same plain-language summary of the tool. High-contrast foreground text sits on
   a solid, texture-free background, and status/role information (the eyebrow line, the tagline
