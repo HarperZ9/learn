@@ -5,6 +5,7 @@ import { run, resume } from "./runtime/runner.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
 import { saveRun, loadRun } from "./runstore.mjs";
 import { buildReceipt } from "./receipt/receipt.mjs";
+import { Ledger } from "./accountability/ledger.mjs";
 import { doctor } from "./doctor.mjs";
 import { status } from "./status.mjs";
 import "./adapters/fake.mjs";
@@ -111,7 +112,24 @@ export async function main(argv, { dir = process.cwd() } = {}) {
     }
     return { code: 0, out: `assist: ${art.assist.claims.length} claim(s) + ${art.assist.sources.length} source(s) -> ${out}/{assist,crucible-thesis,gather-manifest}.json (authors nothing — flags what YOU verify)${extra}` };
   }
-  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor> ..." };
+  if (cmd === "visualize") {
+    const { toTelosSceneSpec, telosRender, toAidLedgerEntry } = await import("./interop/telos.mjs");
+    const concept = JSON.parse(readFileSync(argv[1], "utf8"));
+    const out = arg(argv, "--out") || join(dir, "runs");
+    mkdirSync(out, { recursive: true });
+    const spec = toTelosSceneSpec(concept);
+    const specPath = join(out, "scene-request.json");
+    writeFileSync(specPath, JSON.stringify(spec, null, 2));
+    const render = telosRender(specPath);
+    const ledger = new Ledger();
+    ledger.append(toAidLedgerEntry(render, { concept, seq: 0 }));
+    const slug = (spec.concept.title || "concept").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "concept";
+    const aidReceipt = { provenance: "aid", concept: spec.concept, request: spec, render, ledger: ledger.entries(), verified: ledger.verify().ok,
+      note: "Learning aid — this render never satisfies graded work; the operator still does every assessment." };
+    writeFileSync(join(out, slug + ".aid.json"), JSON.stringify(aidReceipt, null, 2));
+    return { code: 0, out: `visualize: ${spec.concept.title || "(concept)"} -> ${render.verdict}${render.selected_profile ? " (profile " + render.selected_profile + ")" : ""}, provenance aid -> ${out}/${slug}.aid.json` };
+  }
+  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor|visualize> ..." };
 }
 
 // Direct invocation: `node src/cli.mjs ...`
