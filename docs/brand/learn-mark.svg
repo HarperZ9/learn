@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 440" role="img" aria-label="Project Telos mark for learn, accountable credential and coursework engine.">
+  <title>learn mark</title>
+  <desc>Project Telos mark for learn, accountable credential and coursework engine.</desc>
+  <rect width="520" height="440" rx="44" fill="#f4f3ef"/>
+  <path d="M260 128 C196 98 132 98 88 120 V318 C132 296 196 296 260 326 C324 296 388 296 432 318 V120 C388 98 324 98 260 128 Z" fill="none" stroke="#0b0c0e" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M260 128 V326" stroke="#0b0c0e" stroke-width="10"/>
+  <path d="M136 172 H228 M136 214 H228" stroke="#0b0c0e" stroke-opacity=".45" stroke-width="8" stroke-linecap="round"/>
+  <path d="M292 172 H384 M292 214 H384" stroke="#0b0c0e" stroke-opacity=".45" stroke-width="8" stroke-linecap="round"/>
+  <path d="M172 262 L228 304 L344 220" fill="none" stroke="#3a2bd6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
