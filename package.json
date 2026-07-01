@@ -1,0 +1,9 @@
+{
+  "name": "learn",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Accountable credential & coursework engine — logistics + witness, never fakes assessments.",
+  "license": "LicenseRef-fair-source",
+  "scripts": { "test": "node --test" },
+  "engines": { "node": ">=20" }
+}
