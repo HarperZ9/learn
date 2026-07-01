@@ -1,32 +1,17 @@
 # learn Brand Assets
 
-The README hero image and mark in this folder were authored on 2026-06-30 as part of bringing
-`learn` to flagship parity with the rest of Project Telos (gather, crucible, forum, index, telos).
+The hero image is the Project Telos flagship card, the shared clean brand used by every
+flagship and the website.
 
 ## Rendering Receipt
 
-- Source: `docs/brand/learn-hero.svg` and `docs/brand/learn-mark.svg`, hand-authored SVG (SVG is
-  text; no external renderer or design tool produced them).
-- Product role: accountable credential and coursework engine; the teach-you learning loop.
-- Tool-specific motif: an open book with a checkmark drawn in the iris accent, standing in for
-  "study, then prove it yourself."
-- Iris accent: `#3a2bd6`, matching the other flagships' single accent color discipline.
-- Typography: the SVG wordmark and headline use system font stacks (`Arial, Helvetica, sans-serif`
-  for the headline; `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` for the eyebrow and
-  tagline rows), the same stack choice as gather/crucible/forum/index/telos. No purchased or
-  bundled font file is required or shipped.
-- PNG hero: `docs/brand/learn-hero.png` is rendered by the shared Project Telos brand renderer
-  `project-telos.brand-render/v2` (`telos/tools/render_flagship_heroes.py`, Pillow), the same
-  pipeline that produces the gather, crucible, index, forum, and telos heroes, using the
-  operator-owned Kilon (display) and Conso (mono) font packages rendered locally. The public
-  repository carries only the exported PNG, not the purchased font files. The `learn` brand entry
-  lives in `docs/brand/brand-config.json` in this repo; regenerate from a telos checkout with
-  `python ../telos/tools/render_flagship_heroes.py --render --config ../learn/docs/brand/brand-config.json --public-root ..`
-  (the same renderer and Kilon/Conso font packages the other flagship heroes use).
-- Accessibility floor: both SVGs carry `role="img"`, an `aria-label`, a `<title>`, and a `<desc>`,
-  each stating the same plain-language summary of the tool. High-contrast foreground text sits on
-  a solid, texture-free background, and status/role information (the eyebrow line, the tagline
-  strip) never depends on color alone. `learn-hero.png` is the static fallback for GitHub's README
-  renderer and any host that does not render inline SVG.
-- Provenance boundary: no third-party image, template, or generated-art source was used. The
-  motif, the wordmark, and the copy are original to this repository.
+- Source: the flagship card at `portfolio-site/img/og/_card.html?f=learn`, driven by the
+  card data (role, wordmark, headline, pipeline, glyph) in `portfolio-site/img/og/cards-data.js`.
+- Rendered to `learn-hero.png` (2400x1260) with headless Chrome at a 1200x630 viewport and 2x
+  device scale, the same capture the other flagship heroes use.
+- Design: ceramic card face, a single iris accent, a mono eyebrow (`PROJECT TELOS / LEARNING AID`),
+  a sans headline, the pipeline line, a ghost wordmark, and one glyph from the shared card glyph
+  library. `learn-mark.svg` is the compact square mark.
+- Accessibility floor: high-contrast text on a solid field; the README `<img>` carries alt text.
+- Provenance boundary: original layout and copy; no third-party image, template, or generated-art
+  source was used.
