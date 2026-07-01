@@ -27,6 +27,7 @@ node src/cli.mjs doctor
 | `learn run <workflow.json> [--id X] [--native --match <tab>] [--submit manual\|witnessed-auto]` | Execute a workflow. Halts at `assess`/consent/CAPTCHA. `--native` drives your real browser. `--submit` sets submission mode (default manual). |
 | `learn resume <id> [--attest "..."] [--native --match <tab>] [--submit ...]` | Resume after you completed a graded step; records your attestation. |
 | `learn assist <draft.txt> [--out dir] [--crucible] [--gather]` | Turn your OWN draft into a crucible thesis (claims→verdicts) + gather manifest (sources→receipts). Authors nothing. |
+| `learn visualize <concept.json> [--out dir]` | Render a math/physics/science concept via the telos engine as a witnessed learning **aid** (never graded work). Fails closed if `LEARN_TELOS_CMD` is unset. |
 | `learn tutor <plan\|record\|mastery\|receipt> <id> ...` | The teach-you loop: objectives → practice (you solve) → self-check → mastery-gate. Won't say "ready" until you've demonstrated mastery. Never supplies real-assessment answers. |
 | `learn verify <id>` | Verify the run's hash-chained ledger is intact. |
 | `learn receipt <id>` | Emit the provenance receipt as JSON + Markdown + HTML (print HTML for PDF). |
@@ -41,6 +42,7 @@ node src/cli.mjs doctor
 3. Every step is witnessed; the ledger is hash-chained and tamper-evident.
 4. The receipt separates automated logistics from human assessment.
 5. Credentials, payment, CAPTCHA, and account creation halt for the operator.
+6. Aid visualizations are learning aids only — witnessed and hash-chained, but never satisfy an `assess` step or enter the graded receipt channels.
 
 ## Architecture (all zero-dep)
 
@@ -52,6 +54,7 @@ node src/cli.mjs doctor
 - `receipt/` — dual-plus format: JSON + Markdown + HTML.
 - `assist/` — study aid: flags claims to verify (crucible) and sources to cite (gather) in *your own* draft; authors nothing.
 - `tutor/` — the teach-you engine: objectives → practice (you solve) → self-check → **mastery-gate** (ready only after demonstrated mastery), with a witnessed practice log. Generates practice and checks *your* answers; never supplies answers to the real graded assessment.
+- `interop/telos.mjs` — the visualization bridge: `concept → math_physics scene-spec → witnessed AID render`. Delegates rendering to the telos engine over `LEARN_TELOS_CMD` (fail-closed); learn never imports telos internals or picks the renderer profile.
 - `resume/` — ingests an earned credential into a resume/portfolio, carrying the provenance flag.
 - `mcp.mjs` — zero-dep JSON-RPC/stdio MCP server exposing advisory tools (`learn_doctor/status/verify/receipt/dry_run`). Actuation stays operator-driven on the CLI.
 - `doctor.mjs` / `status.mjs` — the operator-spine self-check + capability envelope.
@@ -59,6 +62,7 @@ node src/cli.mjs doctor
 ## Interop
 `gather` (source receipts) and `crucible` (measured claim evaluation) power the assist pillar;
 `native-control` provides real-browser actuation. See `docs/smoke.md` for an operator-run live-LMS smoke.
+`telos` renders concepts (math/physics/science) as witnessed learning aids via its `math_physics` lane.
 
 ## License
 Fair-source (see `LICENSE`), including a binding integrity clause: derivatives may not remove the
