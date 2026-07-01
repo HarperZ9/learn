@@ -88,7 +88,78 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       writeFileSync(join(dir, "tutor", id + ".mastery.json"), JSON.stringify(r, null, 2));
       return { code: 0, out: `tutor receipt ${id}: mastery ${r.mastery.ready ? "READY" : "not yet"}, ${r.totalAttempts} attempts -> tutor/${id}.mastery.json` };
     }
-    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt> <id> ..." };
+    if (sub === "due") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { due } = await import("./tutor/schedule.mjs");
+      const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor due: --now is required (ISO string or epoch ms)" };
+      const list = due(s, { now, asOf: arg(argv, "--as-of") || undefined });
+      return { code: 0, out: `tutor due ${id}: ${list.length} objective(s) due\n` + list.map((d) => `  ${d.objective} (overdue since ${d.dueAt})`).join("\n") };
+    }
+    if (sub === "misconceptions") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { misconceptions } = await import("./tutor/misconception.mjs");
+      const list = misconceptions(s);
+      return { code: 0, out: `tutor misconceptions ${id}: ${list.length} objective(s)\n` + list.map((m) => `  ${m.objective} (${m.count}x): ${m.notes.join("; ")}`).join("\n") };
+    }
+    if (sub === "retrieval") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { clozePrompts } = await import("./tutor/retrieval.mjs");
+      const { assist } = await import("./assist/assist.mjs");
+      const draftPath = arg(argv, "--draft"); if (!draftPath) return { code: 1, out: "tutor retrieval: --draft <file> is required" };
+      const draft = readFileSync(draftPath, "utf8");
+      const a = assist(draft);
+      const prompts = clozePrompts(a, { objective: arg(argv, "--objective") || null });
+      return { code: 0, out: `tutor retrieval ${id}: ${prompts.length} cloze prompt(s)\n` + prompts.map((p) => `  ${p.prompt}  [source: ${p.source || "n/a"}]`).join("\n") };
+    }
+    if (sub === "explain") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { explanationThesis } = await import("./tutor/explain.mjs");
+      const filePath = arg(argv, "--file"); if (!filePath) return { code: 1, out: "tutor explain: --file <file> is required" };
+      const explanation = readFileSync(filePath, "utf8");
+      const thesis = explanationThesis(explanation);
+      writeFileSync(join(dir, "tutor", id + ".explain-thesis.json"), JSON.stringify(thesis, null, 2));
+      return { code: 0, out: `tutor explain ${id}: thesis with ${thesis.claims.length} claim(s) -> tutor/${id}.explain-thesis.json` };
+    }
+    if (sub === "predict") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { recordPrediction } = await import("./tutor/predict.mjs");
+      recordPrediction(s, { objective: arg(argv, "--objective"), prompt: arg(argv, "--prompt") || "", prediction: arg(argv, "--prediction") || "" });
+      saveSession(dir, id, s);
+      return { code: 0, out: `tutor predict ${id}: prediction recorded as pending attempt ${s.attempts.length - 1}` };
+    }
+    if (sub === "score") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { scorePrediction } = await import("./tutor/predict.mjs");
+      const index = Number(arg(argv, "--index"));
+      scorePrediction(s, { index, correct: arg(argv, "--correct") === "true", note: arg(argv, "--note") || "" });
+      saveSession(dir, id, s);
+      return { code: 0, out: `tutor score ${id}: attempt ${index} scored` };
+    }
+    if (sub === "path") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { learningPath } = await import("./tutor/map.mjs");
+      const path = learningPath(s.objectives);
+      return { code: 0, out: `tutor path ${id}: ${path.join(" -> ")}` };
+    }
+    if (sub === "study") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { studyPlan } = await import("./tutor/study.mjs");
+      const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study: --now is required (ISO string or epoch ms)" };
+      const plan = studyPlan(s, { now, seed: arg(argv, "--seed") || undefined });
+      return { code: 0, out: `tutor study ${id}: ${plan.due.length} due, ${plan.misconceptions.length} misconception(s), mastery ${plan.mastery.ready ? "READY" : "not yet"}\n` +
+        `  due: ${plan.due.map((d) => d.objective).join(", ") || "(none)"}\n` +
+        `  order: ${plan.order.join(", ")}\n` +
+        `  readiness: ${plan.readiness.map((r) => `${r.objective}:${r.unlocked ? "unlocked" : "locked"}`).join(", ")}` };
+    }
+    if (sub === "study-receipt") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { studyReceipt } = await import("./tutor/study.mjs");
+      const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study-receipt: --now is required (ISO string or epoch ms)" };
+      const r = studyReceipt(s, { now, seed: arg(argv, "--seed") || undefined });
+      writeFileSync(join(dir, "tutor", id + ".study-receipt.json"), JSON.stringify(r, null, 2));
+      return { code: 0, out: `tutor study-receipt ${id}: verified ${r.verified}, mastery ${r.mastery.ready ? "READY" : "not yet"} -> tutor/${id}.study-receipt.json` };
+    }
+    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt> <id> ..." };
   }
   if (cmd === "assist") {
     const { assistArtifacts } = await import("./assist/assist.mjs");
