@@ -37,3 +37,19 @@ export function telosRender(specPath, { cmd = process.env.LEARN_TELOS_CMD } = {}
     artifactRef: out.artifactRef ?? null,
   };
 }
+
+// Pure: the ledger-entry shape for a witnessed aid render. kind "aid-visualization" is deliberately
+// distinct from every graded-channel kind, so the receipt can never file it as human assessment.
+export function toAidLedgerEntry(render, { concept, seq } = {}) {
+  const entry = {
+    kind: "aid-visualization",
+    provenance: "aid",
+    concept: concept?.title ?? (typeof concept === "string" ? concept : null),
+    selected_profile: render?.selected_profile ?? null,
+    scene_spec_hash: render?.scene_spec_hash ?? null,
+    result_hash: render?.result_hash ?? null,
+    verdict: render?.verdict ?? "UNVERIFIABLE",
+  };
+  if (seq !== undefined) entry.seq = seq;
+  return entry;
+}
