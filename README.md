@@ -24,8 +24,9 @@ node src/cli.mjs doctor
 
 | Command | What it does |
 |---|---|
-| `learn run <workflow.json> [--id X] [--native --match <tab>]` | Execute a workflow. Halts at `assess`/consent/CAPTCHA. `--native` drives your real browser via native-control. |
-| `learn resume <id> [--attest "..."] [--native --match <tab>]` | Resume after you completed a graded step; records your attestation. |
+| `learn run <workflow.json> [--id X] [--native --match <tab>] [--submit manual\|witnessed-auto]` | Execute a workflow. Halts at `assess`/consent/CAPTCHA. `--native` drives your real browser. `--submit` sets submission mode (default manual). |
+| `learn resume <id> [--attest "..."] [--native --match <tab>] [--submit ...]` | Resume after you completed a graded step; records your attestation. |
+| `learn assist <draft.txt> [--out dir] [--crucible] [--gather]` | Turn your OWN draft into a crucible thesis (claims→verdicts) + gather manifest (sources→receipts). Authors nothing. |
 | `learn verify <id>` | Verify the run's hash-chained ledger is intact. |
 | `learn receipt <id>` | Emit the provenance receipt as JSON + Markdown + HTML (print HTML for PDF). |
 | `learn doctor` | Runtime self-check of the integrity invariants → MATCH/DEGRADED. |
@@ -33,7 +34,8 @@ node src/cli.mjs doctor
 
 ## Integrity invariants (each has a falsifiable test; `doctor` re-checks them at runtime)
 
-1. `assess` steps never auto-complete — the engine halts for the operator.
+1. `assess` steps never auto-complete — the engine halts for the operator, in **both** submission modes.
+   Submission mode (`manual` vs `witnessed-auto`) governs only the `submit` action; it never touches graded work.
 2. Default-deny — only known step kinds run; an undeclared step is refused, nothing actuated.
 3. Every step is witnessed; the ledger is hash-chained and tamper-evident.
 4. The receipt separates automated logistics from human assessment.

@@ -6,9 +6,12 @@ export function buildReceipt({ workflow, ledger, completion }) {
   const steps = rows.map((r) => r.entry);
   const automatedLogistics = steps.filter((e) => e.kind === "step").length;
   const humanAssessments = steps.filter((e) => e.kind === "human-assessment").map((e) => ({ seq: e.seq, note: e.note, at: e.at }));
+  const witnessedAutoSubmissions = steps.filter((e) => e.kind === "step" && e.submission === "witnessed-auto")
+    .map((e) => ({ seq: e.seq, submittedStateDigest: e.submittedStateDigest }));
+  const manualSubmissions = steps.filter((e) => e.kind === "human-gate" && e.stepKind === "submit").map((e) => ({ seq: e.seq }));
   const verified = ledger.verify().ok;
   const certId = completion ? completion.certId : null;
-  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, certId, steps };
+  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, witnessedAutoSubmissions, manualSubmissions, certId, steps };
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const html = `<!doctype html><meta charset="utf-8"><title>Credential receipt — ${esc(workflow.course)}</title>
 <style>body{font:15px/1.5 system-ui,sans-serif;max-width:44rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a}

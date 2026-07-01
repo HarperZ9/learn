@@ -12,6 +12,11 @@ export function status() {
     adapters: ["fake", "generic", "coursera", "udemy", "linkedin-learning", "edx", "credly", "microsoft-learn", "nonprofitready", "selfpaced"],
     receiptFormats: ["json", "markdown", "html"],
     interop: { crucible: "claims -> thesis -> MATCH/DRIFT/UNVERIFIABLE", gather: "sources -> receipts", telosEngine: "compose" },
+    submissionModes: {
+      manual: "engine halts at each submit; the operator clicks submit",
+      "witnessed-auto": "engine performs the submit via actuation with operator authorization, recording a witnessed before/after digest of exactly what was submitted",
+    },
+    note: "submission mode affects `submit` only; `assess` (graded work) always halts regardless.",
     integrityInvariants: [
       "assess steps never auto-complete — the engine halts for the operator",
       "default-deny — only known step kinds run",

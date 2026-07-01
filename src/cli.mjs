@@ -28,7 +28,8 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   if (cmd === "run") {
     const wf = loadWorkflow(JSON.parse(readFileSync(argv[1], "utf8")));
     const id = arg(argv, "--id") || "run";
-    const r = await run(wf, { driver: await makeDriver(argv) });
+    const submissionMode = arg(argv, "--submit") === "witnessed-auto" ? "witnessed-auto" : "manual";
+    const r = await run(wf, { driver: await makeDriver(argv), submissionMode });
     saveRun(dir, id, { workflow: wf, ...r });
     return { code: 0, out: `run ${id}: ${r.status}${r.haltedAt != null ? " @step " + r.haltedAt : ""}` };
   }
@@ -36,7 +37,8 @@ export async function main(argv, { dir = process.cwd() } = {}) {
     const id = argv[1]; const prev = loadRun(dir, id);
     const attest = arg(argv, "--attest");
     const humanAttest = attest ? { seq: prev.haltedAt, note: attest, at: new Date(0).toISOString() } : null;
-    const r = await resume(prev.workflow, { driver: await makeDriver(argv), ledger: prev.ledger, haltedAt: prev.haltedAt, allowIrreversible: true, humanAttest });
+    const submissionMode = arg(argv, "--submit") === "witnessed-auto" ? "witnessed-auto" : "manual";
+    const r = await resume(prev.workflow, { driver: await makeDriver(argv), ledger: prev.ledger, haltedAt: prev.haltedAt, allowIrreversible: true, submissionMode, humanAttest });
     saveRun(dir, id, { workflow: prev.workflow, ...r });
     return { code: 0, out: `resume ${id}: ${r.status}` };
   }
