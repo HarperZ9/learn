@@ -15,7 +15,7 @@ function sentences(text) {
 export function assist(draft, { sources = [], author = "operator" } = {}) {
   const text = String(draft || "");
   const claims = sentences(text).filter((s) => CLAIM_RE.test(s)).map((s) => ({ text: s.slice(0, 300), verify: true }));
-  const foundUrls = text.match(URL_RE) || [];
+  const foundUrls = (text.match(URL_RE) || []).map((u) => u.replace(/[.,;:!?]+$/, ""));
   const allSources = [...new Set([...sources, ...foundUrls])];
   return {
     author,
@@ -38,4 +38,12 @@ export function assistPlan(result) {
     crucible: result.claims.map((c) => `python -m crucible assess  # claim: ${c.text.slice(0, 60)}`),
     gather: result.sources.map((s) => `python -m gather run ${s}`),
   };
+}
+
+// Bundle the assist record with the real interop artifacts (crucible thesis + gather manifest).
+import { toCrucibleThesis } from "../interop/crucible.mjs";
+import { toGatherManifest } from "../interop/gather.mjs";
+export function assistArtifacts(draft, opts = {}) {
+  const a = assist(draft, opts);
+  return { assist: a, crucibleThesis: toCrucibleThesis(a, opts), gatherManifest: toGatherManifest(a) };
 }

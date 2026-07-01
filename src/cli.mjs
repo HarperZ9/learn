@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadWorkflow } from "./workflow/schema.mjs";
 import { run, resume } from "./runtime/runner.mjs";
@@ -59,7 +59,29 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   if (cmd === "status") {
     return { code: 0, out: JSON.stringify(status(), null, 2) };
   }
-  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status> ..." };
+  if (cmd === "assist") {
+    const { assistArtifacts } = await import("./assist/assist.mjs");
+    const draft = readFileSync(argv[1], "utf8");
+    const out = arg(argv, "--out") || join(dir, "assist");
+    mkdirSync(out, { recursive: true });
+    const art = assistArtifacts(draft, { title: arg(argv, "--title") || undefined });
+    writeFileSync(join(out, "assist.json"), JSON.stringify(art.assist, null, 2));
+    writeFileSync(join(out, "crucible-thesis.json"), JSON.stringify(art.crucibleThesis, null, 2));
+    writeFileSync(join(out, "gather-manifest.json"), JSON.stringify(art.gatherManifest, null, 2));
+    let extra = "";
+    if (argv.includes("--crucible")) {
+      const { crucibleAssess } = await import("./interop/crucible.mjs");
+      const r = crucibleAssess(join(out, "crucible-thesis.json"));
+      extra += `\ncrucible: ${r.ran ? ("ran (exit " + r.code + ")") : r.reason}`;
+    }
+    if (argv.includes("--gather")) {
+      const { gatherRun } = await import("./interop/gather.mjs");
+      const r = gatherRun(art.gatherManifest.sources);
+      extra += `\ngather: ${r.ran ? (r.receipts.length + " source(s) processed") : r.reason}`;
+    }
+    return { code: 0, out: `assist: ${art.assist.claims.length} claim(s) + ${art.assist.sources.length} source(s) -> ${out}/{assist,crucible-thesis,gather-manifest}.json (authors nothing — flags what YOU verify)${extra}` };
+  }
+  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status|assist> ..." };
 }
 
 // Direct invocation: `node src/cli.mjs ...`

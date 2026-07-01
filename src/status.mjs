@@ -9,8 +9,9 @@ export function status() {
     kind: "accountable credential & coursework engine",
     stepKinds: [...STEP_KINDS],
     drivers: ["fake", "native"],
-    adapters: ["fake", "generic"],
+    adapters: ["fake", "generic", "coursera", "udemy", "linkedin-learning", "edx", "credly", "microsoft-learn", "nonprofitready", "selfpaced"],
     receiptFormats: ["json", "markdown", "html"],
+    interop: { crucible: "claims -> thesis -> MATCH/DRIFT/UNVERIFIABLE", gather: "sources -> receipts", telosEngine: "compose" },
     integrityInvariants: [
       "assess steps never auto-complete — the engine halts for the operator",
       "default-deny — only known step kinds run",

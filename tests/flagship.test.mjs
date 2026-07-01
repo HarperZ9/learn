@@ -8,19 +8,21 @@ import { run, resume } from "../src/runtime/runner.mjs";
 import { loadWorkflow } from "../src/workflow/schema.mjs";
 import { FakeDriver } from "../src/actuation/driver.mjs";
 import { buildReceipt } from "../src/receipt/receipt.mjs";
+import { version } from "../src/index.mjs";
 import "../src/adapters/fake.mjs";
 
 test("doctor exercises every invariant and returns MATCH", async () => {
   const d = await doctor();
   assert.equal(d.status, "MATCH");
-  assert.equal(d.version, "1.0.0");
+  assert.equal(d.version, version);
+  assert.match(version, /^\d+\.\d+\.\d+$/);
   assert.ok(d.checks.length >= 4);
   assert.ok(d.checks.every((c) => c.status === "MATCH"));
 });
 
 test("status reports version + integrity invariants + html receipt format", () => {
   const s = status();
-  assert.equal(s.version, "1.0.0");
+  assert.equal(s.version, version);
   assert.ok(s.integrityInvariants.some((i) => /assess/i.test(i)));
   assert.ok(s.receiptFormats.includes("html"));
 });
