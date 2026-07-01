@@ -9,6 +9,21 @@ export function buildReceipt({ workflow, ledger, completion }) {
   const verified = ledger.verify().ok;
   const certId = completion ? completion.certId : null;
   const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, certId, steps };
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const html = `<!doctype html><meta charset="utf-8"><title>Credential receipt — ${esc(workflow.course)}</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:44rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a}
+h1{font-size:1.4rem}.ok{color:#0a7d2c;font-weight:600}.no{color:#b00020;font-weight:600}
+.k{color:#555}code{background:#f2f2f2;padding:1px 4px;border-radius:3px;font-size:.85em}
+table{border-collapse:collapse;width:100%;margin:1rem 0}td,th{border:1px solid #ddd;padding:.35rem .5rem;text-align:left;font-size:.9em}
+.note{color:#444;border-left:3px solid #0a7d2c;padding-left:.8rem;margin-top:1.2rem}</style>
+<h1>Credential receipt — ${esc(workflow.course)}</h1>
+<p class="k">Workflow seal: <code>${esc(workflow.seal)}</code></p>
+<p>Ledger verified: <span class="${verified ? "ok" : "no"}">${verified ? "yes" : "NO"}</span>
+ &nbsp;·&nbsp; Automated logistics: <b>${automatedLogistics}</b>
+ &nbsp;·&nbsp; Human assessments: <b>${humanAssessments.length}</b>
+ &nbsp;·&nbsp; Certificate: <b>${esc(certId ?? "(none)")}</b></p>
+${humanAssessments.length ? `<table><tr><th>seq</th><th>graded step performed by the operator</th><th>at</th></tr>${humanAssessments.map((h) => `<tr><td>${esc(h.seq)}</td><td>${esc(h.note)}</td><td>${esc(h.at)}</td></tr>`).join("")}</table>` : ""}
+<p class="note">This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the hash-chain above is independently re-verifiable. Print this page to PDF for a shareable copy.</p>`;
   const markdown = [
     `# Credential receipt — ${workflow.course}`,
     ``,
@@ -21,5 +36,5 @@ export function buildReceipt({ workflow, ledger, completion }) {
     ``,
     `This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the chain above is re-verifiable.`,
   ].join("\n");
-  return { json, markdown };
+  return { json, markdown, html };
 }

@@ -1,0 +1,23 @@
+// Status envelope — capabilities + the integrity constraints the engine guarantees.
+import { version } from "./index.mjs";
+import { STEP_KINDS } from "./workflow/schema.mjs";
+
+export function status() {
+  return {
+    tool: "learn",
+    version,
+    kind: "accountable credential & coursework engine",
+    stepKinds: [...STEP_KINDS],
+    drivers: ["fake", "native"],
+    adapters: ["fake", "generic"],
+    receiptFormats: ["json", "markdown", "html"],
+    integrityInvariants: [
+      "assess steps never auto-complete — the engine halts for the operator",
+      "default-deny — only known step kinds run",
+      "every step is witnessed and the ledger is hash-chained (tamper-evident)",
+      "the receipt separates automated logistics from human assessment",
+      "credentials, payment, CAPTCHA, and account creation halt for the operator",
+    ],
+    boundary: "The engine never produces graded work. It is a learning aid, not a bypass.",
+  };
+}

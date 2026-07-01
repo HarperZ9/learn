@@ -1,9 +1,18 @@
 {
   "name": "learn",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Accountable credential & coursework engine — logistics + witness, never fakes assessments.",
+  "description": "Accountable credential & coursework engine — automates course logistics, halts at every graded step for the human, and emits a tamper-evident receipt of how a credential was earned. Learning aid, not a bypass.",
   "license": "LicenseRef-fair-source",
+  "author": "Zain Dana Harper (github.com/HarperZ9)",
+  "keywords": ["accountability", "credential", "provenance", "learning", "automation", "zero-dependency", "telos"],
+  "bin": { "learn": "src/cli.mjs" },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./doctor": "./src/doctor.mjs",
+    "./status": "./src/status.mjs"
+  },
   "scripts": { "test": "node --test" },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=20" },
+  "files": ["src/", "docs/", "README.md", "LICENSE"]
 }

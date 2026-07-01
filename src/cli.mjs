@@ -5,8 +5,11 @@ import { run, resume } from "./runtime/runner.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
 import { saveRun, loadRun } from "./runstore.mjs";
 import { buildReceipt } from "./receipt/receipt.mjs";
+import { doctor } from "./doctor.mjs";
+import { status } from "./status.mjs";
 import "./adapters/fake.mjs";
 import "./adapters/generic.mjs";
+import "./adapters/lms.mjs";
 
 function arg(argv, flag) { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : null; }
 
@@ -43,12 +46,20 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   }
   if (cmd === "receipt") {
     const id = argv[1]; const prev = loadRun(dir, id);
-    const { json, markdown } = buildReceipt({ workflow: prev.workflow, ledger: prev.ledger, completion: prev.completion });
+    const { json, markdown, html } = buildReceipt({ workflow: prev.workflow, ledger: prev.ledger, completion: prev.completion });
     writeFileSync(join(dir, "runs", id + ".receipt.json"), JSON.stringify(json, null, 2));
     writeFileSync(join(dir, "runs", id + ".receipt.md"), markdown);
-    return { code: 0, out: `receipt written: runs/${id}.receipt.json + .md` };
+    writeFileSync(join(dir, "runs", id + ".receipt.html"), html);
+    return { code: 0, out: `receipt written: runs/${id}.receipt.json + .md + .html (print .html for PDF)` };
   }
-  return { code: 1, out: "usage: learn <run|resume|verify|receipt> ..." };
+  if (cmd === "doctor") {
+    const d = await doctor();
+    return { code: d.status === "MATCH" ? 0 : 1, out: `learn doctor: ${d.status}\n` + d.checks.map((c) => `  [${c.status}] ${c.name}`).join("\n") };
+  }
+  if (cmd === "status") {
+    return { code: 0, out: JSON.stringify(status(), null, 2) };
+  }
+  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status> ..." };
 }
 
 // Direct invocation: `node src/cli.mjs ...`
