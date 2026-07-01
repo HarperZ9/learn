@@ -18,6 +18,16 @@ export function status() {
     },
     note: "submission mode affects `submit` only; `assess` (graded work) always halts regardless.",
     tutor: "teach-you loop: objectives -> practice (operator solves) -> self-check -> mastery-gate; witnessed practice log; never supplies real graded-assessment answers",
+    learningLoop: {
+      schedule: "spaced repetition (SM-2-lite/Leitner ladder) over the operator's own practice log; due() reports objectives due for review, most-overdue first",
+      misconception: "aggregates the operator's own WRONG attempts + their feedback per objective, ranked by count, to prioritize the next study session",
+      retrieval: "clozePrompts turns the operator's OWN assist-extracted claims into blanked recall prompts carrying a source; interleave() gives a deterministic (seeded, no Math.random) mixed study order",
+      explain: "self-explanation: wraps the operator's OWN explanation into a crucible thesis and buckets MATCH/DRIFT/UNVERIFIABLE verdicts into grounded/shaky/unverifiable",
+      predict: "predict-then-observe: records the operator's OWN prediction as a pending attempt, scored only after they compare it to a rendered aid observation",
+      map: "normalizes objectives (string or {id,text,requires}), computes a topological learningPath, and gates readiness on prerequisite mastery",
+      study: "orchestrator composing due + misconceptions + interleaved order + readiness + mastery into one studyPlan, and a witnessed hash-chained studyReceipt",
+      boundary: "every learning-loop capability generates practice, structures study, or checks the operator's OWN work — never produces, hints, or auto-fills an answer to a certified/graded assessment",
+    },
     integrityInvariants: [
       "assess steps never auto-complete — the engine halts for the operator",
       "default-deny — only known step kinds run",

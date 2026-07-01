@@ -11,6 +11,9 @@ import { loadWorkflow } from "./workflow/schema.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
 import { newSession, recordAttempt, mastery } from "./tutor/tutor.mjs";
 import { saveSession, loadSession } from "./tutor/tutorstore.mjs";
+import { due } from "./tutor/schedule.mjs";
+import { misconceptions } from "./tutor/misconception.mjs";
+import { studyPlan } from "./tutor/study.mjs";
 import "./adapters/fake.mjs";
 import "./adapters/generic.mjs";
 import "./adapters/lms.mjs";
@@ -25,6 +28,9 @@ export const TOOLS = [
   { name: "learn_tutor_record", description: "Record the operator's answer to a PRACTICE question (NOT the graded assessment) and whether it was correct.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, objective: { type: "string" }, prompt: { type: "string" }, answer: { type: "string" }, correct: { type: "boolean" }, feedback: { type: "string" } }, required: ["sessionId", "objective", "correct"] } },
   { name: "learn_tutor_mastery", description: "Check the mastery-gate: has the operator demonstrated readiness for the real assessment?", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_visualize_dry_run", description: "Return the telos scene-spec request that WOULD be sent to render a math/physics concept (advisory; renders nothing, actuation stays on the CLI).", inputSchema: { type: "object", properties: { concept: { type: "object" } }, required: ["concept"] } },
+  { name: "learn_tutor_due", description: "Advisory, read-only: list objectives due for spaced-repetition review in a saved tutor session, most-overdue first.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, asOf: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
+  { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, interleaved order, prerequisite readiness, mastery-gate verdict).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
+  { name: "learn_tutor_misconceptions", description: "Advisory, read-only: return the ranked misconception aggregation (wrong attempts + the operator's own feedback) for a saved tutor session.", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
 ];
 
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
@@ -57,6 +63,18 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
     case "learn_visualize_dry_run": {
       const { toTelosSceneSpec } = await import("./interop/telos.mjs");
       return toTelosSceneSpec(args.concept || {});
+    }
+    case "learn_tutor_due": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      return { sessionId: args.sessionId, due: due(s, { now: args.now, asOf: args.asOf }) };
+    }
+    case "learn_tutor_studyplan": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      return { sessionId: args.sessionId, ...studyPlan(s, { now: args.now, seed: args.seed }) };
+    }
+    case "learn_tutor_misconceptions": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      return { sessionId: args.sessionId, misconceptions: misconceptions(s) };
     }
     default: throw new Error(`unknown tool: ${name}`);
   }
