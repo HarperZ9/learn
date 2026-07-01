@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { toTelosSceneSpec, telosRender } from "../src/interop/telos.mjs";
+import { toTelosSceneSpec, telosRender, toAidLedgerEntry } from "../src/interop/telos.mjs";
+import { Ledger } from "../src/accountability/ledger.mjs";
 
 test("toTelosSceneSpec builds a math_physics scene request with a deterministic hash", () => {
   const concept = { title: "Damped harmonic oscillator", kind: "physics.ode", params: { omega: 2.0, zeta: 0.1 } };
@@ -50,4 +51,20 @@ test("telosRender returns UNVERIFIABLE (never throws) on non-JSON engine output"
   assert.equal(r.provenance, "aid");
   assert.equal(r.verdict, "UNVERIFIABLE");
   assert.equal(r.failure, "bad-render-output");
+});
+
+test("toAidLedgerEntry produces an aid-visualization entry usable in a hash-chained ledger", () => {
+  const render = telosRender("ignored.json", { cmd: "node " + FAKE });
+  const entry = toAidLedgerEntry(render, { concept: { title: "y = sin(x)" }, seq: 7 });
+  assert.equal(entry.kind, "aid-visualization");
+  assert.equal(entry.provenance, "aid");
+  assert.equal(entry.seq, 7);
+  assert.equal(entry.concept, "y = sin(x)");
+  assert.equal(entry.result_hash, "sha256:" + "b".repeat(64));
+  assert.equal(entry.verdict, "MATCH");
+
+  const l = new Ledger();
+  l.append(entry);
+  assert.equal(l.verify().ok, true);
+  assert.equal(l.entries()[0].entry.kind, "aid-visualization");
 });
