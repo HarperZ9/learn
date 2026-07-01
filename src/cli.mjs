@@ -61,6 +61,34 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   if (cmd === "status") {
     return { code: 0, out: JSON.stringify(status(), null, 2) };
   }
+  if (cmd === "tutor") {
+    const { newSession, recordAttempt, mastery, masteryReceipt } = await import("./tutor/tutor.mjs");
+    const { saveSession, loadSession } = await import("./tutor/tutorstore.mjs");
+    const sub = argv[1]; const id = argv[2];
+    if (sub === "plan") {
+      const s = newSession({ topic: arg(argv, "--topic") || "", objectives: (arg(argv, "--objectives") || "").split(",").map((x) => x.trim()).filter(Boolean) });
+      saveSession(dir, id, s);
+      return { code: 0, out: `tutor plan ${id}: ${s.objectives.length} objective(s)` };
+    }
+    if (sub === "record") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      recordAttempt(s, { objective: arg(argv, "--objective"), prompt: arg(argv, "--prompt") || "", answer: arg(argv, "--answer") || "", correct: arg(argv, "--correct") === "true", feedback: arg(argv, "--feedback") || "" });
+      saveSession(dir, id, s);
+      return { code: 0, out: `tutor record ${id}: ${s.attempts.length} practice attempt(s)` };
+    }
+    if (sub === "mastery") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const m = mastery(s, { threshold: Number(arg(argv, "--threshold")) || 0.8, minAttempts: Number(arg(argv, "--min")) || 3 });
+      return { code: m.ready ? 0 : 1, out: `tutor mastery ${id}: ${m.ready ? "READY" : "not yet"}\n` + m.perObjective.map((p) => `  [${p.ready ? "ready" : "keep going"}] ${p.objective}: ${p.correct}/${p.attempts} (${Math.round(p.accuracy * 100)}%)`).join("\n") };
+    }
+    if (sub === "receipt") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const r = masteryReceipt(s);
+      writeFileSync(join(dir, "tutor", id + ".mastery.json"), JSON.stringify(r, null, 2));
+      return { code: 0, out: `tutor receipt ${id}: mastery ${r.mastery.ready ? "READY" : "not yet"}, ${r.totalAttempts} attempts -> tutor/${id}.mastery.json` };
+    }
+    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt> <id> ..." };
+  }
   if (cmd === "assist") {
     const { assistArtifacts } = await import("./assist/assist.mjs");
     const draft = readFileSync(argv[1], "utf8");
@@ -83,7 +111,7 @@ export async function main(argv, { dir = process.cwd() } = {}) {
     }
     return { code: 0, out: `assist: ${art.assist.claims.length} claim(s) + ${art.assist.sources.length} source(s) -> ${out}/{assist,crucible-thesis,gather-manifest}.json (authors nothing — flags what YOU verify)${extra}` };
   }
-  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status|assist> ..." };
+  return { code: 1, out: "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor> ..." };
 }
 
 // Direct invocation: `node src/cli.mjs ...`

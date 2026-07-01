@@ -17,6 +17,7 @@ export function status() {
       "witnessed-auto": "engine performs the submit via actuation with operator authorization, recording a witnessed before/after digest of exactly what was submitted",
     },
     note: "submission mode affects `submit` only; `assess` (graded work) always halts regardless.",
+    tutor: "teach-you loop: objectives -> practice (operator solves) -> self-check -> mastery-gate; witnessed practice log; never supplies real graded-assessment answers",
     integrityInvariants: [
       "assess steps never auto-complete — the engine halts for the operator",
       "default-deny — only known step kinds run",

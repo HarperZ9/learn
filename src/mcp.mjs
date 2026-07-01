@@ -9,6 +9,8 @@ import { buildReceipt } from "./receipt/receipt.mjs";
 import { run } from "./runtime/runner.mjs";
 import { loadWorkflow } from "./workflow/schema.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
+import { newSession, recordAttempt, mastery } from "./tutor/tutor.mjs";
+import { saveSession, loadSession } from "./tutor/tutorstore.mjs";
 import "./adapters/fake.mjs";
 import "./adapters/generic.mjs";
 import "./adapters/lms.mjs";
@@ -19,6 +21,9 @@ export const TOOLS = [
   { name: "learn_verify", description: "Verify a saved run's hash-chained ledger is intact (tamper-evident).", inputSchema: { type: "object", properties: { runId: { type: "string" } }, required: ["runId"] } },
   { name: "learn_receipt", description: "Return the credential-provenance receipt (logistics vs human-assessment split) for a saved run.", inputSchema: { type: "object", properties: { runId: { type: "string" } }, required: ["runId"] } },
   { name: "learn_dry_run", description: "Preview a workflow with the Fake driver (no real browser): where it halts for the operator, without touching a live site.", inputSchema: { type: "object", properties: { workflowPath: { type: "string" } }, required: ["workflowPath"] } },
+  { name: "learn_tutor_plan", description: "Create a tutor study session with learning objectives (the teach-you loop).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, topic: { type: "string" }, objectives: { type: "array", items: { type: "string" } } }, required: ["sessionId"] } },
+  { name: "learn_tutor_record", description: "Record the operator's answer to a PRACTICE question (NOT the graded assessment) and whether it was correct.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, objective: { type: "string" }, prompt: { type: "string" }, answer: { type: "string" }, correct: { type: "boolean" }, feedback: { type: "string" } }, required: ["sessionId", "objective", "correct"] } },
+  { name: "learn_tutor_mastery", description: "Check the mastery-gate: has the operator demonstrated readiness for the real assessment?", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
 ];
 
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
@@ -32,6 +37,21 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
       const driver = new FakeDriver();
       const res = await run(wf, { driver });
       return { status: res.status, haltedAt: res.haltedAt, steps: res.ledger.entries().map((e) => e.entry.kind) };
+    }
+    case "learn_tutor_plan": {
+      const s = newSession({ topic: args.topic || "", objectives: args.objectives || [] });
+      saveSession(dir, args.sessionId, s);
+      return { sessionId: args.sessionId, objectives: s.objectives };
+    }
+    case "learn_tutor_record": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      recordAttempt(s, { objective: args.objective, prompt: args.prompt || "", answer: args.answer || "", correct: args.correct, feedback: args.feedback || "" });
+      saveSession(dir, args.sessionId, s);
+      return { sessionId: args.sessionId, attempts: s.attempts.length };
+    }
+    case "learn_tutor_mastery": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      return mastery(s);
     }
     default: throw new Error(`unknown tool: ${name}`);
   }

@@ -1,5 +1,7 @@
 node_modules/
 *.log
 /runs/
+/tutor/
+/assist/
 .env
 .env.*

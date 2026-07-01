@@ -27,6 +27,7 @@ node src/cli.mjs doctor
 | `learn run <workflow.json> [--id X] [--native --match <tab>] [--submit manual\|witnessed-auto]` | Execute a workflow. Halts at `assess`/consent/CAPTCHA. `--native` drives your real browser. `--submit` sets submission mode (default manual). |
 | `learn resume <id> [--attest "..."] [--native --match <tab>] [--submit ...]` | Resume after you completed a graded step; records your attestation. |
 | `learn assist <draft.txt> [--out dir] [--crucible] [--gather]` | Turn your OWN draft into a crucible thesis (claims→verdicts) + gather manifest (sources→receipts). Authors nothing. |
+| `learn tutor <plan\|record\|mastery\|receipt> <id> ...` | The teach-you loop: objectives → practice (you solve) → self-check → mastery-gate. Won't say "ready" until you've demonstrated mastery. Never supplies real-assessment answers. |
 | `learn verify <id>` | Verify the run's hash-chained ledger is intact. |
 | `learn receipt <id>` | Emit the provenance receipt as JSON + Markdown + HTML (print HTML for PDF). |
 | `learn doctor` | Runtime self-check of the integrity invariants → MATCH/DEGRADED. |
@@ -50,6 +51,7 @@ node src/cli.mjs doctor
 - `adapters/` — `generic` config-driven adapter + an LMS pack (Coursera, Udemy, LinkedIn Learning, edX, Credly). No graded logic anywhere.
 - `receipt/` — dual-plus format: JSON + Markdown + HTML.
 - `assist/` — study aid: flags claims to verify (crucible) and sources to cite (gather) in *your own* draft; authors nothing.
+- `tutor/` — the teach-you engine: objectives → practice (you solve) → self-check → **mastery-gate** (ready only after demonstrated mastery), with a witnessed practice log. Generates practice and checks *your* answers; never supplies answers to the real graded assessment.
 - `resume/` — ingests an earned credential into a resume/portfolio, carrying the provenance flag.
 - `mcp.mjs` — zero-dep JSON-RPC/stdio MCP server exposing advisory tools (`learn_doctor/status/verify/receipt/dry_run`). Actuation stays operator-driven on the CLI.
 - `doctor.mjs` / `status.mjs` — the operator-spine self-check + capability envelope.
