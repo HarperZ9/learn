@@ -3,6 +3,7 @@
 // AID: every result is tagged provenance:"aid" and is structurally barred from graded work.
 // Zero-dep (node builtins). learn never imports telos internals — it asks over LEARN_TELOS_CMD.
 import { sha256hex } from "../accountability/witness.mjs";
+import { spawnSync } from "node:child_process";
 
 // Pure: turn a concept descriptor into a scene-spec request. No I/O.
 export function toTelosSceneSpec(concept = {}, { lane = "math_physics" } = {}) {
@@ -13,4 +14,26 @@ export function toTelosSceneSpec(concept = {}, { lane = "math_physics" } = {}) {
   };
   spec.requestHash = "sha256:" + sha256hex(JSON.stringify({ concept: spec.concept, spec: spec.spec }));
   return spec;
+}
+
+// Delegate rendering to the telos CLI. Configure LEARN_TELOS_CMD, e.g. "node ../telos/src/cli.mjs"
+// (assumed contract: `render <specPath>` -> render-result JSON on stdout). ALWAYS fail-closed and
+// ALWAYS tagged provenance:"aid". Never throws.
+export function telosRender(specPath, { cmd = process.env.LEARN_TELOS_CMD } = {}) {
+  if (!cmd) return { ran: false, verdict: "UNVERIFIABLE", failure: "engine-unavailable", provenance: "aid", reason: "no telos command configured (set LEARN_TELOS_CMD)" };
+  const parts = cmd.split(/\s+/).filter(Boolean);
+  const res = spawnSync(parts[0], [...parts.slice(1), "render", specPath], { encoding: "utf8", timeout: 120000 });
+  if (res.error) return { ran: false, verdict: "UNVERIFIABLE", failure: "engine-unavailable", provenance: "aid", reason: String(res.error.message) };
+  let out = null; try { out = JSON.parse(res.stdout); } catch {}
+  if (!out || typeof out !== "object") return { ran: true, verdict: "UNVERIFIABLE", failure: "bad-render-output", provenance: "aid", code: res.status ?? null, stdout: (res.stdout || "").slice(0, 400) };
+  return {
+    ran: true, provenance: "aid",
+    selected_profile: out.selected_profile ?? null,
+    fallback_chain: out.fallback_chain ?? [],
+    scene_spec_hash: out.scene_spec_hash ?? null,
+    result_hash: out.result_hash ?? null,
+    verdict: out.verdict ?? "UNVERIFIABLE",
+    evidence_refs: out.evidence_refs ?? [],
+    artifactRef: out.artifactRef ?? null,
+  };
 }
