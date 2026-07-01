@@ -41,7 +41,7 @@ export async function doctor() {
   const al = new Ledger();
   al.append(toAidLedgerEntry({ verdict: "MATCH", result_hash: "sha256:b" }, { concept: "probe", seq: 0 }));
   const rj = buildReceipt({ workflow: { course: "d", seal: "s" }, ledger: al, completion: null }).json;
-  add("receipt.aid_never_graded", rj.aidVisualizations.length === 1 && rj.humanAssessments.length === 0 && rj.witnessedAutoSubmissions.length === 0);
+  add("receipt.aid_never_graded", rj.aidVisualizations.length === 1 && rj.humanAssessments.length === 0 && rj.witnessedAutoSubmissions.length === 0 && rj.manualSubmissions.length === 0);
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };

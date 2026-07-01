@@ -15,7 +15,7 @@ Zero external dependencies. Node ≥ 20, ES modules.
 ## Install / run
 
 ```
-node --test          # 37 tests
+node --test          # 67 tests
 node src/cli.mjs status
 node src/cli.mjs doctor
 ```
