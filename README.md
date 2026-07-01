@@ -167,11 +167,20 @@ aids via its `math_physics` lane.
 
 ## Docs
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the accountability spine (witness, ledger, gate)
+  and how both engines, credential logistics and the learning loop, are built from it.
+- [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md): the study loop walked step by step, plan, due,
+  retrieval, predict-then-observe, self-explanation, misconceptions, mastery-gate, witnessed
+  receipt.
+- [USAGE.md](USAGE.md): install and basic usage for both engines and the MCP surface.
+- [docs/ENTERPRISE-READINESS.md](docs/ENTERPRISE-READINESS.md): the Project Telos context-envelope
+  and action-receipt contract for unattended agent workflows.
 - [CHANGELOG.md](CHANGELOG.md): version history.
 - [AGENTS.md](AGENTS.md): scope, developer contract, and verification commands.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to send a change.
 - [AUTHORS.md](AUTHORS.md): authorship.
 - [docs/smoke.md](docs/smoke.md): operator-run live-LMS smoke test.
+- [docs/brand/README.md](docs/brand/README.md): brand asset provenance.
 
 ## License
 

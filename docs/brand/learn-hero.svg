@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 520" role="img" aria-label="learn README hero for Project Telos. Study smarter, prove it honestly, and never let the machine take the test for you.">
+  <title>learn Project Telos hero</title>
+  <desc>learn README hero for Project Telos. Study smarter, prove it honestly, and never let the machine take the test for you.</desc>
+  <rect width="1280" height="520" rx="34" fill="#f4f3ef"/>
+  <path d="M80 96 H1200 M80 424 H1200" stroke="#0b0c0e" stroke-opacity=".14"/>
+  <text x="80" y="86" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="20" letter-spacing="6" fill="#585c64">PROJECT TELOS / ACCOUNTABLE CREDENTIAL &amp; COURSEWORK ENGINE</text>
+  <text x="76" y="334" font-family="Arial Black, Impact, system-ui, sans-serif" font-size="182" letter-spacing="0" fill="#0b0c0e" fill-opacity=".08">LEARN</text>
+  <text font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#0b0c0e">
+    <tspan x="84" y="188">Study smarter, prove it honestly,</tspan>
+    <tspan x="84" dy="48">never let the machine take the test.</tspan>
+  </text>
+  <text x="86" y="290" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" fill="#2f3238">PLAN / PRACTICE / MASTERY-GATE / WITNESSED RECEIPT</text>
+  <g transform="translate(878 78) scale(.70)">
+    <path d="M260 108 C196 78 132 78 88 100 V318 C132 296 196 296 260 326 C324 296 388 296 432 318 V100 C388 78 324 78 260 108 Z" fill="none" stroke="#0b0c0e" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M260 108 V326" stroke="#0b0c0e" stroke-width="10"/>
+    <path d="M136 154 H228 M136 196 H228" stroke="#0b0c0e" stroke-opacity=".45" stroke-width="8" stroke-linecap="round"/>
+    <path d="M292 154 H384 M292 196 H384" stroke="#0b0c0e" stroke-opacity=".45" stroke-width="8" stroke-linecap="round"/>
+    <path d="M172 258 L228 300 L344 216" fill="none" stroke="#3a2bd6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
