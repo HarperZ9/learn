@@ -43,6 +43,11 @@ export class NativeDriver {
   }
   async capture(kind = "dom") {
     this.actions.push("capture:" + kind);
+    if (kind === "evidence") {
+      const state = await this._m.pageState(this.session);
+      const ref = "browser-evidence:" + (state.url || "unknown");
+      return { kind, payload: ref, evidenceRef: ref };
+    }
     if (kind === "screenshot") {
       const data = await this._m.screenshot(this.session);
       return { kind, payload: "screenshot:sha-of-" + (data ? data.length : 0) + "-bytes" };
