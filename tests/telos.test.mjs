@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { toTelosSceneSpec } from "../src/interop/telos.mjs";
+import { fileURLToPath } from "node:url";
+import { toTelosSceneSpec, telosRender } from "../src/interop/telos.mjs";
 
 test("toTelosSceneSpec builds a math_physics scene request with a deterministic hash", () => {
   const concept = { title: "Damped harmonic oscillator", kind: "physics.ode", params: { omega: 2.0, zeta: 0.1 } };
@@ -20,4 +21,33 @@ test("toTelosSceneSpec defaults kind and tolerates a bare concept", () => {
   const a = toTelosSceneSpec({ title: "y = x^2" });
   assert.equal(a.concept.kind, "math.function-plot");
   assert.deepEqual(a.spec.params, {});
+});
+
+const FAKE = fileURLToPath(new URL("./fixtures/fake-telos.mjs", import.meta.url));
+
+test("telosRender fails closed when no command is configured", () => {
+  const r = telosRender("ignored.json", { cmd: "" });
+  assert.equal(r.ran, false);
+  assert.equal(r.verdict, "UNVERIFIABLE");
+  assert.equal(r.failure, "engine-unavailable");
+  assert.equal(r.provenance, "aid");
+  assert.match(r.reason, /telos command/i);
+});
+
+test("telosRender parses the engine result and tags it aid", () => {
+  const r = telosRender("ignored.json", { cmd: "node " + FAKE });
+  assert.equal(r.ran, true);
+  assert.equal(r.provenance, "aid");
+  assert.equal(r.verdict, "MATCH");
+  assert.equal(r.selected_profile, "canvas2d-receipt-renderer");
+  assert.equal(r.result_hash, "sha256:" + "b".repeat(64));
+  assert.ok(Array.isArray(r.fallback_chain) && r.fallback_chain.length === 3);
+});
+
+test("telosRender returns UNVERIFIABLE (never throws) on non-JSON engine output", () => {
+  // `node -e "..."` prints non-JSON; telosRender must degrade, not crash.
+  const r = telosRender("ignored.json", { cmd: 'node -e process.stdout.write("not-json")' });
+  assert.equal(r.provenance, "aid");
+  assert.equal(r.verdict, "UNVERIFIABLE");
+  assert.equal(r.failure, "bad-render-output");
 });
