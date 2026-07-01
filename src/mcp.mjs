@@ -24,6 +24,7 @@ export const TOOLS = [
   { name: "learn_tutor_plan", description: "Create a tutor study session with learning objectives (the teach-you loop).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, topic: { type: "string" }, objectives: { type: "array", items: { type: "string" } } }, required: ["sessionId"] } },
   { name: "learn_tutor_record", description: "Record the operator's answer to a PRACTICE question (NOT the graded assessment) and whether it was correct.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, objective: { type: "string" }, prompt: { type: "string" }, answer: { type: "string" }, correct: { type: "boolean" }, feedback: { type: "string" } }, required: ["sessionId", "objective", "correct"] } },
   { name: "learn_tutor_mastery", description: "Check the mastery-gate: has the operator demonstrated readiness for the real assessment?", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
+  { name: "learn_visualize_dry_run", description: "Return the telos scene-spec request that WOULD be sent to render a math/physics concept (advisory; renders nothing, actuation stays on the CLI).", inputSchema: { type: "object", properties: { concept: { type: "object" } }, required: ["concept"] } },
 ];
 
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
@@ -52,6 +53,10 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
     case "learn_tutor_mastery": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
       return mastery(s);
+    }
+    case "learn_visualize_dry_run": {
+      const { toTelosSceneSpec } = await import("./interop/telos.mjs");
+      return toTelosSceneSpec(args.concept || {});
     }
     default: throw new Error(`unknown tool: ${name}`);
   }
