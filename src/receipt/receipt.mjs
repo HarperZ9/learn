@@ -9,9 +9,11 @@ export function buildReceipt({ workflow, ledger, completion }) {
   const witnessedAutoSubmissions = steps.filter((e) => e.kind === "step" && e.submission === "witnessed-auto")
     .map((e) => ({ seq: e.seq, submittedStateDigest: e.submittedStateDigest }));
   const manualSubmissions = steps.filter((e) => e.kind === "human-gate" && e.stepKind === "submit").map((e) => ({ seq: e.seq }));
+  const aidVisualizations = steps.filter((e) => e.kind === "aid-visualization")
+    .map((e) => ({ seq: e.seq, concept: e.concept, selected_profile: e.selected_profile, result_hash: e.result_hash, verdict: e.verdict }));
   const verified = ledger.verify().ok;
   const certId = completion ? completion.certId : null;
-  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, witnessedAutoSubmissions, manualSubmissions, certId, steps };
+  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, witnessedAutoSubmissions, manualSubmissions, aidVisualizations, certId, steps };
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const html = `<!doctype html><meta charset="utf-8"><title>Credential receipt — ${esc(workflow.course)}</title>
 <style>body{font:15px/1.5 system-ui,sans-serif;max-width:44rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a}
@@ -24,6 +26,7 @@ table{border-collapse:collapse;width:100%;margin:1rem 0}td,th{border:1px solid #
 <p>Ledger verified: <span class="${verified ? "ok" : "no"}">${verified ? "yes" : "NO"}</span>
  &nbsp;·&nbsp; Automated logistics: <b>${automatedLogistics}</b>
  &nbsp;·&nbsp; Human assessments: <b>${humanAssessments.length}</b>
+ &nbsp;·&nbsp; Aid visualizations: <b>${aidVisualizations.length}</b>
  &nbsp;·&nbsp; Certificate: <b>${esc(certId ?? "(none)")}</b></p>
 ${humanAssessments.length ? `<table><tr><th>seq</th><th>graded step performed by the operator</th><th>at</th></tr>${humanAssessments.map((h) => `<tr><td>${esc(h.seq)}</td><td>${esc(h.note)}</td><td>${esc(h.at)}</td></tr>`).join("")}</table>` : ""}
 <p class="note">This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the hash-chain above is independently re-verifiable. Print this page to PDF for a shareable copy.</p>`;
@@ -36,6 +39,8 @@ ${humanAssessments.length ? `<table><tr><th>seq</th><th>graded step performed by
     `- Human assessment steps (performed by the operator): **${humanAssessments.length}**`,
     ...humanAssessments.map((h) => `  - seq ${h.seq}: ${h.note} (${h.at})`),
     `- Certificate: ${certId ?? "(none captured)"}`,
+    `- Aid visualizations (learning aids — never graded work): **${aidVisualizations.length}**`,
+    ...aidVisualizations.map((v) => `  - ${v.concept ?? "(concept)"}: ${v.verdict} (${v.selected_profile ?? "n/a"})`),
     ``,
     `This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the chain above is re-verifiable.`,
   ].join("\n");
