@@ -27,6 +27,7 @@ export function status() {
       map: "normalizes objectives (string or {id,text,requires}), computes a topological learningPath, and gates readiness on prerequisite mastery",
       study: "orchestrator composing due + misconceptions + interleaved order + readiness + mastery into one studyPlan, and a witnessed hash-chained studyReceipt",
       reverify: "re-verifies an emitted tutor receipt from its own recorded evidence: the hash chain is recomputed and the mastery verdict re-derived under the recorded policy; failures are typed CHAIN_BROKEN / VERDICT_MISMATCH, and a chainless receipt is UNVERIFIED, never verified",
+      prooflesson: "proof-packet -> lesson: derives an explanation scaffold, retrieval questions, and a verifier binding (packet verdict + packet_id + source hashes) from a proof packet's own fields, plus a typed misconception record (overclaim / missing_evidence / contradicted) for DRIFT/UNVERIFIABLE packets; the lesson verdict always equals the packet verdict and the chained lesson receipt is covered by reverify",
       boundary: "every learning-loop capability generates practice, structures study, or checks the operator's OWN work — never produces, hints, or auto-fills an answer to a certified/graded assessment",
     },
     integrityInvariants: [
