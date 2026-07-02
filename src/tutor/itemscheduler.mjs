@@ -64,11 +64,20 @@ export function recordAttemptWithGrade(session, { objective, grade, now } = {}) 
 
 // healItem(session, id) -> a valid item-state object for `id`, re-initializing/clamping if the
 // stored state is missing or corrupt. Writes the healed state back so corruption is fixed in place.
+function isCorrupt(cur) {
+  return (
+    !cur ||
+    !Number.isFinite(cur.stability) || cur.stability <= 0 ||
+    !Number.isFinite(cur.difficulty) || cur.difficulty < 0.2 || cur.difficulty > 1.0
+  );
+}
+
 function healItem(session, id) {
   const state = ensureItemState(session);
   const cur = state[id];
-  if (!cur || !Number.isFinite(cur.stability) || cur.stability <= 0 || !Number.isFinite(cur.difficulty)) {
+  if (isCorrupt(cur)) {
     const healed = { ...freshItem(cur && cur.createdAt ? cur.createdAt : null), ...(cur || {}) };
+    // initializeItem clamps difficulty into [0.2,1.0] and stability to a positive floor.
     const norm = initializeItem({ difficulty: healed.difficulty, stability: healed.stability });
     state[id] = { ...healed, difficulty: norm.difficulty, stability: norm.stability };
   }
