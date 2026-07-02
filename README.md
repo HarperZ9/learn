@@ -18,7 +18,7 @@
 ## Try it
 
 ```bash
-node --test          # 167 tests
+node --test          # 206 tests
 node src/cli.mjs status
 node src/cli.mjs doctor
 ```
@@ -68,6 +68,12 @@ capability matches where you are stuck:
 - **`learn tutor study`** (`study.mjs`): the orchestrator. Composes due + misconceptions +
   interleaved order + prerequisite readiness + the mastery-gate into one plan, and a witnessed,
   hash-chained `study-receipt` you can keep.
+- **Receipt re-verification** (`reverify.mjs`): `learn tutor reverify` recomputes an emitted
+  receipt's own evidence instead of trusting its stored booleans. The hash chain over the
+  witnessed practice entries must recompute (a break is typed `CHAIN_BROKEN` with the offending
+  entry) and the stored mastery verdict must re-derive from the recorded attempts under the
+  recorded policy (a divergence is typed `VERDICT_MISMATCH`). A chainless receipt is `UNVERIFIED`,
+  never verified; a clean re-check exits 0 with a witnessed summary digest.
 
 Underneath the learning loop, the original credential-logistics engine still runs workflows
 (`learn run` / `learn resume`), halts at every graded `assess` step for you to complete yourself,
@@ -89,13 +95,14 @@ and emits a provenance receipt separating automated logistics from your own grad
 - **Release:** `1.5.0`; command `learn`; Node >= 20; zero external dependencies (ES modules,
   `node:test`).
 - **Operator surface:** `learn status`, `learn doctor`, `learn run/resume/verify/receipt`,
-  `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|due|
+  `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|due|
   misconceptions|retrieval|explain|predict|score|path|study|study-receipt>`. The zero-dep MCP
   server (`src/mcp.mjs`) exposes the advisory/read tools: `learn_doctor`, `learn_status`,
   `learn_verify`, `learn_receipt`, `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`,
   `learn_tutor_mastery`, `learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`,
-  and `learn_visualize_dry_run`. Actuation (real runs) stays operator-driven on the CLI.
-- **Test floor:** 167 tests across the runtime, adapters, receipt, tutor/learning-loop, and telos
+  `learn_tutor_reverify`, and `learn_visualize_dry_run`. Actuation (real runs) stays
+  operator-driven on the CLI.
+- **Test floor:** 206 tests across the runtime, adapters, receipt, tutor/learning-loop, and telos
   interop, including a falsifiable test per integrity invariant.
 - **Housekeeping:** see [CHANGELOG.md](CHANGELOG.md) for version history.
 
@@ -133,7 +140,8 @@ a render, a visualization, or a pending prediction as if it were a graded answer
   `schedule.mjs` (spaced repetition), `misconception.mjs` (aggregation), `retrieval.mjs`
   (cloze generation + interleaving), `explain.mjs` (self-explanation grading), `predict.mjs`
   (predict-then-observe), `map.mjs` (concept map + prerequisite gating), `study.mjs` (the
-  orchestrator + witnessed study-receipt), `tutorstore.mjs` (session persistence).
+  orchestrator + witnessed study-receipt), `reverify.mjs` (receipt re-verification: recomputed
+  chain + re-derived verdict, typed failures), `tutorstore.mjs` (session persistence).
 - `interop/telos.mjs`: the visualization bridge. `concept -> math_physics scene-spec -> witnessed
   AID render`. Delegates rendering to the telos engine over `LEARN_TELOS_CMD` (fail-closed); learn
   never imports telos internals or picks the renderer profile.
@@ -157,6 +165,10 @@ a render, a visualization, or a pending prediction as if it were a graded answer
    study) generates practice, structures study, or checks the operator's own work, and the
    `mastery()` verdict is a function of the operator's own scored practice attempts only, never
    of a render, a visualization, or an unscored pending prediction.
+8. A tutor receipt re-verifies from its own recorded evidence. `learn tutor reverify` recomputes
+   the hash chain and re-derives the mastery verdict; failures are typed (`CHAIN_BROKEN`,
+   `VERDICT_MISMATCH`), author-controlled booleans never gate, and a chainless receipt is
+   `UNVERIFIED`, never verified.
 
 ## Interop
 

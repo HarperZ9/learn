@@ -26,6 +26,7 @@ export function status() {
       predict: "predict-then-observe: records the operator's OWN prediction as a pending attempt, scored only after they compare it to a rendered aid observation",
       map: "normalizes objectives (string or {id,text,requires}), computes a topological learningPath, and gates readiness on prerequisite mastery",
       study: "orchestrator composing due + misconceptions + interleaved order + readiness + mastery into one studyPlan, and a witnessed hash-chained studyReceipt",
+      reverify: "re-verifies an emitted tutor receipt from its own recorded evidence: the hash chain is recomputed and the mastery verdict re-derived under the recorded policy; failures are typed CHAIN_BROKEN / VERDICT_MISMATCH, and a chainless receipt is UNVERIFIED, never verified",
       boundary: "every learning-loop capability generates practice, structures study, or checks the operator's OWN work — never produces, hints, or auto-fills an answer to a certified/graded assessment",
     },
     integrityInvariants: [
@@ -35,6 +36,7 @@ export function status() {
       "the receipt separates automated logistics from human assessment",
       "credentials, payment, CAPTCHA, and account creation halt for the operator",
       "aid visualizations are learning aids only — they are witnessed but never satisfy an assess step or enter the graded receipt channels",
+      "tutor receipts re-verify from their own recorded evidence, never from author-controlled booleans (CHAIN_BROKEN / VERDICT_MISMATCH; chainless receipts are never verified)",
     ],
     boundary: "The engine never produces graded work. It is a learning aid, not a bypass.",
   };

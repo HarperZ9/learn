@@ -35,11 +35,19 @@ node src/cli.mjs tutor misconceptions mysession
 node src/cli.mjs tutor mastery mysession
 node src/cli.mjs tutor study mysession --now 2026-06-30T00:00:00Z
 node src/cli.mjs tutor study-receipt mysession --now 2026-06-30T00:00:00Z
+node src/cli.mjs tutor receipt mysession
+node src/cli.mjs tutor reverify mysession
 ```
 
 `learn tutor study` is the one command to run first on an existing session: it composes what is
 due, what you keep getting wrong, a mixed practice order, and the mastery-gate verdict, all from
 your own recorded attempts.
+
+`learn tutor reverify` recomputes an emitted receipt's own evidence (hash chain + verdict
+re-derivation) instead of trusting its stored booleans. It exits 0 with a witnessed summary only
+when every checked receipt re-verifies clean; a tampered chain is typed `CHAIN_BROKEN`, an edited
+verdict is typed `VERDICT_MISMATCH`, and a chainless receipt is `UNVERIFIED`, never verified
+(all exit 1). Use `--file <receipt.json>` to check a single receipt file directly.
 
 ## Basic usage: the credential/coursework engine
 
@@ -61,7 +69,7 @@ node src/mcp.mjs
 
 Exposes the advisory/read tools (`learn_doctor`, `learn_status`, `learn_verify`, `learn_receipt`,
 `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`, `learn_tutor_mastery`,
-`learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`,
+`learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`, `learn_tutor_reverify`,
 `learn_visualize_dry_run`) over stdio JSON-RPC. Actuation (real workflow runs) stays
 operator-driven on the CLI; the MCP surface never performs a real course action or answers a
 graded step.

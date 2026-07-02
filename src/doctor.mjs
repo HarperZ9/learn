@@ -11,6 +11,7 @@ import { telosRender, toAidLedgerEntry } from "./interop/telos.mjs";
 import { buildReceipt } from "./receipt/receipt.mjs";
 import { newSession, recordAttempt, mastery, recordVisualization } from "./tutor/tutor.mjs";
 import { recordPrediction } from "./tutor/predict.mjs";
+import { reverifySelfCheck } from "./tutor/reverify.mjs";
 
 export async function doctor() {
   const checks = [];
@@ -68,6 +69,11 @@ export async function doctor() {
     // the pending prediction is counted as an attempt but NEVER as correct (no silent pass)
     masteryAfterPrediction.perObjective[0].attempts === masteryBefore.perObjective[0].attempts + 1 &&
     masteryAfterPrediction.perObjective[0].correct === masteryBefore.perObjective[0].correct);
+
+  // 8. the tutor-receipt re-verifier can FAIL: it must pass a clean receipt and reject each
+  // known-bad fixture (tampered chain entry, hand-edited verdict, chainless receipt). A verifier
+  // that cannot fail on a known-bad input is not a verifier.
+  add("tutor.reverify_rejects_known_bad", reverifySelfCheck());
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };

@@ -14,6 +14,7 @@ import { saveSession, loadSession } from "./tutor/tutorstore.mjs";
 import { due } from "./tutor/schedule.mjs";
 import { misconceptions } from "./tutor/misconception.mjs";
 import { studyPlan } from "./tutor/study.mjs";
+import { reverifyFiles } from "./tutor/reverify.mjs";
 import "./adapters/fake.mjs";
 import "./adapters/generic.mjs";
 import "./adapters/lms.mjs";
@@ -31,6 +32,7 @@ export const TOOLS = [
   { name: "learn_tutor_due", description: "Advisory, read-only: list objectives due for spaced-repetition review in a saved tutor session, most-overdue first.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, asOf: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
   { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, interleaved order, prerequisite readiness, mastery-gate verdict).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
   { name: "learn_tutor_misconceptions", description: "Advisory, read-only: return the ranked misconception aggregation (wrong attempts + the operator's own feedback) for a saved tutor session.", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
+  { name: "learn_tutor_reverify", description: "Advisory, read-only: re-verify a session's emitted tutor receipts from their own recorded evidence (recomputed hash chain + re-derived mastery verdict). Failures are typed CHAIN_BROKEN / VERDICT_MISMATCH; a chainless receipt is UNVERIFIED, never verified.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, file: { type: "string" } }, required: ["sessionId"] } },
 ];
 
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
@@ -75,6 +77,9 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
     case "learn_tutor_misconceptions": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
       return { sessionId: args.sessionId, misconceptions: misconceptions(s) };
+    }
+    case "learn_tutor_reverify": {
+      return { sessionId: args.sessionId, ...reverifyFiles(dir, args.sessionId, { file: args.file }) };
     }
     default: throw new Error(`unknown tool: ${name}`);
   }
