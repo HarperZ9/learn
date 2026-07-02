@@ -11,6 +11,11 @@ import { due } from "./schedule.mjs";
 import { misconceptions } from "./misconception.mjs";
 import { interleave } from "./retrieval.mjs";
 import { normalizeObjectives, readiness } from "./map.mjs";
+import { sortByRetrievability } from "./itemscheduler.mjs";
+
+function hasItemState(session) {
+  return !!(session && session.itemState && Object.keys(session.itemState).length > 0);
+}
 
 function toEpochMsOrThrow(now) {
   if (now === undefined || now === null) {
@@ -33,17 +38,32 @@ function toEpochMsOrThrow(now) {
 //   `objectives` defaults to session.objectives (plain strings) but may be passed as the richer
 //   {id,text,requires} form to express prerequisites.
 // - mastery: tutor.mastery(session) — the existing mastery-gate, untouched.
-export function studyPlan(session, { now, seed, objectives } = {}) {
+export function studyPlan(session, { now, seed, objectives, useFSRS = false, desiredRetention = 0.9 } = {}) {
   toEpochMsOrThrow(now); // fail fast, same contract as schedule.due
 
   const objs = objectives || session.objectives || [];
   const norm = normalizeObjectives(objs);
   const ids = norm.map((o) => o.id);
 
+  const fsrsActive = useFSRS && hasItemState(session);
+
   const m = mastery(session);
-  const dueList = due(session, { now });
+  const dueList = due(session, { now, useFSRS, desiredRetention });
   const miscon = misconceptions(session);
-  const order = interleave(ids, { seed: seed ?? session.topic ?? "learn-interleave" });
+  // FSRS: study order is retrievability-ranked (most-at-risk first) over the same objective ids;
+  // otherwise the deterministic seeded interleave is used, unchanged.
+  let order;
+  if (fsrsActive) {
+    const ranked = sortByRetrievability(session, { now, desiredRetention })
+      .map((r) => r.objective)
+      .filter((id) => ids.includes(id));
+    // Any objective without item state yet is appended (in declared order) so `order` always
+    // covers the full objective set, never silently dropping an item.
+    const seen = new Set(ranked);
+    order = [...ranked, ...ids.filter((id) => !seen.has(id))];
+  } else {
+    order = interleave(ids, { seed: seed ?? session.topic ?? "learn-interleave" });
+  }
   const ready = readiness(session, objs, m);
 
   return { due: dueList, misconceptions: miscon, order, readiness: ready, mastery: m };
@@ -56,8 +76,8 @@ export function studyPlan(session, { now, seed, objectives } = {}) {
 // hash-chains one ledger entry per practice attempt (mirroring masteryReceipt's own pattern) so the
 // record is tamper-evident. The spine here is a quiet floor: it proves the study happened as
 // recorded, it does not itself grade or unlock anything beyond what studyPlan already computed.
-export function studyReceipt(session, { now, seed, objectives } = {}) {
-  const plan = studyPlan(session, { now, seed, objectives });
+export function studyReceipt(session, { now, seed, objectives, useFSRS = false, desiredRetention = 0.9 } = {}) {
+  const plan = studyPlan(session, { now, seed, objectives, useFSRS, desiredRetention });
 
   const ledger = new Ledger();
   for (const a of session.attempts) {
