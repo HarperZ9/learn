@@ -3,6 +3,23 @@
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
+## Unreleased
+
+- `tutor/reverify.mjs`: tutor-receipt re-verification with typed failure codes. `reverifyReceipt`
+  recomputes a receipt's own evidence instead of trusting its stored booleans (`verified` /
+  `ledgerVerified` are author-controlled and deliberately ignored): the hash chain over the
+  witnessed practice entries must recompute (a break is typed `CHAIN_BROKEN` with the offending
+  entry's seq and hash; a hash-consistent truncation is caught by attempt accounting) and the
+  stored mastery verdict must re-derive from the recorded attempts under the recorded policy (a
+  divergence is typed `VERDICT_MISMATCH` with both projections). A chainless receipt re-verifies
+  as `UNVERIFIED`, never as verified. A clean re-check carries a witnessed summary digest.
+- CLI: `learn tutor reverify <id> [--file <receipt.json>]` exits 0 only when every checked receipt
+  re-verifies as VERIFIED; any typed failure or UNVERIFIED receipt exits 1.
+- MCP: `learn_tutor_reverify` (advisory, read-only).
+- `doctor` gains `tutor.reverify_rejects_known_bad`: the re-verifier must pass a clean receipt and
+  reject each known-bad fixture (tampered chain entry, hand-edited verdict, chainless receipt).
+  A verifier that cannot fail on a known-bad input is not a verifier.
+
 ## 1.5.0
 
 The learning loop reaches its first complete shape: every planned teach-you capability is shipped

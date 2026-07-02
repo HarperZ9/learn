@@ -151,6 +151,12 @@ export async function main(argv, { dir = process.cwd() } = {}) {
         `  order: ${plan.order.join(", ")}\n` +
         `  readiness: ${plan.readiness.map((r) => `${r.objective}:${r.unlocked ? "unlocked" : "locked"}`).join(", ")}` };
     }
+    if (sub === "reverify") {
+      const { reverifyFiles, formatReverify } = await import("./tutor/reverify.mjs");
+      const file = arg(argv, "--file");
+      const r = reverifyFiles(dir, id, { file });
+      return { code: r.ok ? 0 : 1, out: formatReverify(r, file || id) };
+    }
     if (sub === "study-receipt") {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { studyReceipt } = await import("./tutor/study.mjs");
@@ -159,7 +165,7 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       writeFileSync(join(dir, "tutor", id + ".study-receipt.json"), JSON.stringify(r, null, 2));
       return { code: 0, out: `tutor study-receipt ${id}: verified ${r.verified}, mastery ${r.mastery.ready ? "READY" : "not yet"} -> tutor/${id}.study-receipt.json` };
     }
-    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt> <id> ..." };
+    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt|reverify|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt> <id> ..." };
   }
   if (cmd === "assist") {
     const { assistArtifacts } = await import("./assist/assist.mjs");

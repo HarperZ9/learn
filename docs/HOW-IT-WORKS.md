@@ -103,6 +103,20 @@ record. The receipt is a quiet floor: it proves the study happened as recorded. 
 grade or unlock anything beyond what `studyPlan` already computed, and it never contains an answer
 to a certified assessment, only the operator's own recorded practice.
 
+### 9. Receipt re-verification
+
+```bash
+node src/cli.mjs tutor receipt mysession
+node src/cli.mjs tutor reverify mysession
+```
+
+`tutor/reverify.mjs` recomputes an emitted receipt's own evidence instead of trusting its stored
+booleans. The hash chain over the witnessed practice entries must recompute (a break is typed
+`CHAIN_BROKEN` with the offending entry's seq and hash) and the stored mastery verdict must
+re-derive from the recorded attempts under the recorded policy (a divergence is typed
+`VERDICT_MISMATCH`). A receipt without chain evidence is `UNVERIFIED`, never verified. A clean
+re-check exits 0 with a witnessed summary digest; any failure exits 1.
+
 ---
 
 ## Fail-closed, the same way the rest of Project Telos is
