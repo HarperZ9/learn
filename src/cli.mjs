@@ -63,17 +63,34 @@ export async function main(argv, { dir = process.cwd() } = {}) {
     return { code: 0, out: JSON.stringify(status(), null, 2) };
   }
   if (cmd === "tutor") {
-    const { newSession, recordAttempt, mastery, masteryReceipt } = await import("./tutor/tutor.mjs");
+    const { newSession, newSessionWithFSRS, recordAttempt, recordAttemptWithGrade, mastery, masteryReceipt } = await import("./tutor/tutor.mjs");
     const { saveSession, loadSession } = await import("./tutor/tutorstore.mjs");
     const sub = argv[1]; const id = argv[2];
+    const has = (flag) => argv.includes(flag);
     if (sub === "plan") {
-      const s = newSession({ topic: arg(argv, "--topic") || "", objectives: (arg(argv, "--objectives") || "").split(",").map((x) => x.trim()).filter(Boolean) });
+      const objectives = (arg(argv, "--objectives") || "").split(",").map((x) => x.trim()).filter(Boolean);
+      const topic = arg(argv, "--topic") || "";
+      // --enable-fsrs seeds per-item FSRS scheduling state (opt-in; default sessions are unchanged).
+      const s = has("--enable-fsrs") ? newSessionWithFSRS({ topic, objectives }) : newSession({ topic, objectives });
       saveSession(dir, id, s);
-      return { code: 0, out: `tutor plan ${id}: ${s.objectives.length} objective(s)` };
+      const fsrsNote = has("--enable-fsrs") ? " (FSRS scheduling enabled)" : "";
+      return { code: 0, out: `tutor plan ${id}: ${s.objectives.length} objective(s)${fsrsNote}` };
     }
     if (sub === "record") {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
-      recordAttempt(s, { objective: arg(argv, "--objective"), prompt: arg(argv, "--prompt") || "", answer: arg(argv, "--answer") || "", correct: arg(argv, "--correct") === "true", feedback: arg(argv, "--feedback") || "" });
+      const gradeRaw = arg(argv, "--grade");
+      const now = arg(argv, "--now");
+      const common = { objective: arg(argv, "--objective"), prompt: arg(argv, "--prompt") || "", answer: arg(argv, "--answer") || "", feedback: arg(argv, "--feedback") || "" };
+      // --grade (0-4) + --now routes through the FSRS-aware path (logs the attempt AND updates the
+      // per-item scheduling state). Without --grade, the plain correct/incorrect record path is used.
+      if (gradeRaw !== undefined && gradeRaw !== null) {
+        if (!now) return { code: 1, out: "tutor record: --now is required when --grade is given (ISO string or epoch ms)" };
+        const grade = Number(gradeRaw);
+        if (!Number.isInteger(grade) || grade < 0 || grade > 4) return { code: 1, out: "tutor record: --grade must be an integer 0-4 (0=fail,1=slip,2=lapse,3=review,4=easy)" };
+        recordAttemptWithGrade(s, { ...common, grade, correct: has("--correct") ? arg(argv, "--correct") === "true" : undefined, now });
+      } else {
+        recordAttempt(s, { ...common, correct: arg(argv, "--correct") === "true" });
+      }
       saveSession(dir, id, s);
       return { code: 0, out: `tutor record ${id}: ${s.attempts.length} practice attempt(s)` };
     }
@@ -92,7 +109,9 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { due } = await import("./tutor/schedule.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor due: --now is required (ISO string or epoch ms)" };
-      const list = due(s, { now, asOf: arg(argv, "--as-of") || undefined });
+      const useFSRS = has("--use-fsrs");
+      const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
+      const list = due(s, { now, asOf: arg(argv, "--as-of") || undefined, useFSRS, desiredRetention });
       return { code: 0, out: `tutor due ${id}: ${list.length} objective(s) due\n` + list.map((d) => `  ${d.objective} (overdue since ${d.dueAt})`).join("\n") };
     }
     if (sub === "misconceptions") {
@@ -145,7 +164,9 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { studyPlan } = await import("./tutor/study.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study: --now is required (ISO string or epoch ms)" };
-      const plan = studyPlan(s, { now, seed: arg(argv, "--seed") || undefined });
+      const useFSRS = has("--use-fsrs");
+      const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
+      const plan = studyPlan(s, { now, seed: arg(argv, "--seed") || undefined, useFSRS, desiredRetention });
       return { code: 0, out: `tutor study ${id}: ${plan.due.length} due, ${plan.misconceptions.length} misconception(s), mastery ${plan.mastery.ready ? "READY" : "not yet"}\n` +
         `  due: ${plan.due.map((d) => d.objective).join(", ") || "(none)"}\n` +
         `  order: ${plan.order.join(", ")}\n` +
@@ -172,7 +193,9 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { studyReceipt } = await import("./tutor/study.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study-receipt: --now is required (ISO string or epoch ms)" };
-      const r = studyReceipt(s, { now, seed: arg(argv, "--seed") || undefined });
+      const useFSRS = has("--use-fsrs");
+      const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
+      const r = studyReceipt(s, { now, seed: arg(argv, "--seed") || undefined, useFSRS, desiredRetention });
       writeFileSync(join(dir, "tutor", id + ".study-receipt.json"), JSON.stringify(r, null, 2));
       return { code: 0, out: `tutor study-receipt ${id}: verified ${r.verified}, mastery ${r.mastery.ready ? "READY" : "not yet"} -> tutor/${id}.study-receipt.json` };
     }

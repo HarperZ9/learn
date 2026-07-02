@@ -9,7 +9,7 @@ import { buildReceipt } from "./receipt/receipt.mjs";
 import { run } from "./runtime/runner.mjs";
 import { loadWorkflow } from "./workflow/schema.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
-import { newSession, recordAttempt, mastery } from "./tutor/tutor.mjs";
+import { newSession, newSessionWithFSRS, recordAttempt, recordAttemptWithGrade, mastery } from "./tutor/tutor.mjs";
 import { saveSession, loadSession } from "./tutor/tutorstore.mjs";
 import { due } from "./tutor/schedule.mjs";
 import { misconceptions } from "./tutor/misconception.mjs";
@@ -25,12 +25,12 @@ export const TOOLS = [
   { name: "learn_verify", description: "Verify a saved run's hash-chained ledger is intact (tamper-evident).", inputSchema: { type: "object", properties: { runId: { type: "string" } }, required: ["runId"] } },
   { name: "learn_receipt", description: "Return the credential-provenance receipt (logistics vs human-assessment split) for a saved run.", inputSchema: { type: "object", properties: { runId: { type: "string" } }, required: ["runId"] } },
   { name: "learn_dry_run", description: "Preview a workflow with the Fake driver (no real browser): where it halts for the operator, without touching a live site.", inputSchema: { type: "object", properties: { workflowPath: { type: "string" } }, required: ["workflowPath"] } },
-  { name: "learn_tutor_plan", description: "Create a tutor study session with learning objectives (the teach-you loop).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, topic: { type: "string" }, objectives: { type: "array", items: { type: "string" } } }, required: ["sessionId"] } },
-  { name: "learn_tutor_record", description: "Record the operator's answer to a PRACTICE question (NOT the graded assessment) and whether it was correct.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, objective: { type: "string" }, prompt: { type: "string" }, answer: { type: "string" }, correct: { type: "boolean" }, feedback: { type: "string" } }, required: ["sessionId", "objective", "correct"] } },
+  { name: "learn_tutor_plan", description: "Create a tutor study session with learning objectives (the teach-you loop). Set enableFsrs to seed per-item FSRS spaced-repetition scheduling state (opt-in).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, topic: { type: "string" }, objectives: { type: "array", items: { type: "string" } }, enableFsrs: { type: "boolean" } }, required: ["sessionId"] } },
+  { name: "learn_tutor_record", description: "Record the operator's answer to a PRACTICE question (NOT the graded assessment) and whether it was correct. Optionally pass grade (0-4: fail/slip/lapse/review/easy) + now (ISO/epoch ms) to also update the per-item FSRS scheduling state.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, objective: { type: "string" }, prompt: { type: "string" }, answer: { type: "string" }, correct: { type: "boolean" }, feedback: { type: "string" }, grade: { type: "number" }, now: { type: ["string", "number"] } }, required: ["sessionId", "objective"] } },
   { name: "learn_tutor_mastery", description: "Check the mastery-gate: has the operator demonstrated readiness for the real assessment?", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_visualize_dry_run", description: "Return the telos scene-spec request that WOULD be sent to render a math/physics concept (advisory; renders nothing, actuation stays on the CLI).", inputSchema: { type: "object", properties: { concept: { type: "object" } }, required: ["concept"] } },
-  { name: "learn_tutor_due", description: "Advisory, read-only: list objectives due for spaced-repetition review in a saved tutor session, most-overdue first.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, asOf: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
-  { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, interleaved order, prerequisite readiness, mastery-gate verdict).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
+  { name: "learn_tutor_due", description: "Advisory, read-only: list objectives due for spaced-repetition review in a saved tutor session, most-overdue first. Set useFsrs (with an FSRS-enabled session) for retrievability-based due dates against desiredRetention.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, asOf: { type: ["string", "number"] }, useFsrs: { type: "boolean" }, desiredRetention: { type: "number" } }, required: ["sessionId", "now"] } },
+  { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, study order, prerequisite readiness, mastery-gate verdict). Set useFsrs (with an FSRS-enabled session) to rank study order by retrievability (most-at-risk first) against desiredRetention.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] }, useFsrs: { type: "boolean" }, desiredRetention: { type: "number" } }, required: ["sessionId", "now"] } },
   { name: "learn_tutor_misconceptions", description: "Advisory, read-only: return the ranked misconception aggregation (wrong attempts + the operator's own feedback) for a saved tutor session.", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_tutor_reverify", description: "Advisory, read-only: re-verify a session's emitted tutor receipts from their own recorded evidence (recomputed hash chain + re-derived mastery verdict). Failures are typed CHAIN_BROKEN / VERDICT_MISMATCH; a chainless receipt is UNVERIFIED, never verified.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, file: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_tutor_prooflesson", description: "Advisory, read-only: derive a lesson from a proof packet (source refs, claim, verdict, explanation scaffold, retrieval questions, verifier binding) plus a typed misconception record for DRIFT/UNVERIFIABLE packets. The lesson verdict always equals the packet verdict; a forged verdict enum is rejected; nothing is written.", inputSchema: { type: "object", properties: { packet: { type: "object" }, packetPath: { type: "string" } } } },
@@ -49,13 +49,21 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
       return { status: res.status, haltedAt: res.haltedAt, steps: res.ledger.entries().map((e) => e.entry.kind) };
     }
     case "learn_tutor_plan": {
-      const s = newSession({ topic: args.topic || "", objectives: args.objectives || [] });
+      const opts = { topic: args.topic || "", objectives: args.objectives || [] };
+      const s = args.enableFsrs ? newSessionWithFSRS(opts) : newSession(opts);
       saveSession(dir, args.sessionId, s);
-      return { sessionId: args.sessionId, objectives: s.objectives };
+      return { sessionId: args.sessionId, objectives: s.objectives, fsrs: !!args.enableFsrs };
     }
     case "learn_tutor_record": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
-      recordAttempt(s, { objective: args.objective, prompt: args.prompt || "", answer: args.answer || "", correct: args.correct, feedback: args.feedback || "" });
+      const common = { objective: args.objective, prompt: args.prompt || "", answer: args.answer || "", feedback: args.feedback || "" };
+      // grade (0-4) + now routes through the FSRS-aware path (updates per-item scheduling state too).
+      if (args.grade !== undefined && args.grade !== null) {
+        if (args.now === undefined || args.now === null) throw new Error("learn_tutor_record: `now` is required when `grade` is given");
+        recordAttemptWithGrade(s, { ...common, grade: args.grade, correct: args.correct, now: args.now });
+      } else {
+        recordAttempt(s, { ...common, correct: args.correct });
+      }
       saveSession(dir, args.sessionId, s);
       return { sessionId: args.sessionId, attempts: s.attempts.length };
     }
@@ -69,11 +77,11 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
     }
     case "learn_tutor_due": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
-      return { sessionId: args.sessionId, due: due(s, { now: args.now, asOf: args.asOf }) };
+      return { sessionId: args.sessionId, due: due(s, { now: args.now, asOf: args.asOf, useFSRS: !!args.useFsrs, desiredRetention: args.desiredRetention ?? 0.9 }) };
     }
     case "learn_tutor_studyplan": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
-      return { sessionId: args.sessionId, ...studyPlan(s, { now: args.now, seed: args.seed }) };
+      return { sessionId: args.sessionId, ...studyPlan(s, { now: args.now, seed: args.seed, useFSRS: !!args.useFsrs, desiredRetention: args.desiredRetention ?? 0.9 }) };
     }
     case "learn_tutor_misconceptions": {
       const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);

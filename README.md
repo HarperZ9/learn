@@ -10,7 +10,7 @@
 [Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [learn](https://github.com/HarperZ9/learn) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
 
 ![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)
-![version: 1.5.0](https://img.shields.io/badge/version-1.5.0-informational.svg)
+![version: 1.6.0](https://img.shields.io/badge/version-1.6.0-informational.svg)
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-blue.svg)
 ![deps: none](https://img.shields.io/badge/deps-none-success.svg)
 ![license: fair-source](https://img.shields.io/badge/license-fair--source-blue.svg)
@@ -48,8 +48,26 @@ you from what you did yourself, so a mastery claim is never just the tool's word
 Bring a course, a certification, or a topic you are teaching yourself, and use whichever
 capability matches where you are stuck:
 
-- **Spaced repetition** (`tutor.mjs` schedule): an SM-2-lite/Leitner scheduler over your own
+- **Spaced repetition** (`schedule.mjs`): by default an SM-2-lite/Leitner scheduler over your own
   practice log; `tutor due` reports which objectives are overdue for review, most-overdue first.
+- **Adaptive per-item memory model** (`fsrs.mjs` + `itemscheduler.mjs`, opt-in): an FSRS-class
+  model that tracks per-item *difficulty*, *stability*, and *retrievability* and schedules the next
+  review against a retention target you set (e.g. 90%). Where the Leitner ladder re-surfaces whole
+  objectives on fixed intervals, this decays each item's recall probability on its own curve and
+  surfaces the item you are *most likely to have forgotten* next. Enable it per session and grade
+  each attempt 0-4 (fail / slip / lapse / review / easy):
+
+  ```sh
+  learn tutor plan sess --topic "SC-900" --objectives "identity,compliance" --enable-fsrs
+  learn tutor record sess --objective identity --grade 3 --now 2026-06-30T00:00:00Z
+  learn tutor study  sess --now 2026-07-15T00:00:00Z --use-fsrs --desired-retention 0.9
+  ```
+
+  It is a scheduling *hint*, never a verdict: `itemState` is derived and self-healing, and the
+  mastery-gate keeps reading your witnessed `attempts` only, so the study schedule can never move
+  the "ready" line. The flags are advisory — on a session created without `--enable-fsrs` they fall
+  back to the Leitner/interleave path. Timestamps are always injected (`--now`), so schedules are
+  fully deterministic and re-checkable.
 - **Retrieval practice from your own material** (`retrieval.mjs`): turns claims your *own* draft
   already asserts (via `assist`) into blanked cloze prompts you answer from memory, each carrying
   its source so you can check yourself after, not before.
@@ -145,7 +163,9 @@ a render, a visualization, or a pending prediction as if it were a graded answer
 - `assist/`: study aid. Flags claims to verify (crucible) and sources to cite (gather) in *your
   own* draft; authors nothing.
 - `tutor/`: the teach-you engine. `tutor.mjs` (session, practice, mastery-gate),
-  `schedule.mjs` (spaced repetition), `misconception.mjs` (aggregation), `retrieval.mjs`
+  `schedule.mjs` (spaced repetition; opt-in FSRS delegation), `fsrs.mjs` (pure FSRS-class memory
+  math), `itemscheduler.mjs` (per-item difficulty/stability state + retrievability ranking),
+  `misconception.mjs` (aggregation), `retrieval.mjs`
   (cloze generation + interleaving), `explain.mjs` (self-explanation grading), `predict.mjs`
   (predict-then-observe), `map.mjs` (concept map + prerequisite gating), `study.mjs` (the
   orchestrator + witnessed study-receipt), `reverify.mjs` (receipt re-verification: recomputed

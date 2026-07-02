@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { newSession, recordAttempt, mastery, masteryReceipt } from "../src/tutor/tutor.mjs";
+import { newSession, recordAttempt, mastery, masteryReceipt, newSessionWithFSRS, recordAttemptWithGrade } from "../src/tutor/tutor.mjs";
 import { dispatch } from "../src/mcp.mjs";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -42,4 +42,46 @@ test("MCP tutor tools: plan -> record -> mastery round-trip", async () => {
   for (let i = 0; i < 3; i++) await dispatch("learn_tutor_record", { sessionId: "s1", objective: "a", prompt: "q", answer: "x", correct: true }, { dir });
   const m = await dispatch("learn_tutor_mastery", { sessionId: "s1" }, { dir });
   assert.equal(m.ready, true);
+});
+
+const FSRS_NOW = "2026-06-30T00:00:00.000Z";
+
+test("newSessionWithFSRS: seeds itemState for every objective without changing the mastery contract", () => {
+  const s = newSessionWithFSRS({ topic: "t", objectives: ["a", "b"] });
+  assert.ok(s.itemState.a && s.itemState.b, "itemState seeded for each objective");
+  // No attempts yet -> mastery reads attempts only -> not ready.
+  assert.equal(mastery(s).ready, false);
+});
+
+test("recordAttemptWithGrade: logs to session.attempts AND updates itemState, keeping them consistent", () => {
+  const s = newSessionWithFSRS({ topic: "t", objectives: ["a"] });
+  recordAttemptWithGrade(s, { objective: "a", grade: 3, now: FSRS_NOW });
+  // Witnessed log got the attempt (grade 3 -> correct), with grade + timestamp attached.
+  assert.equal(s.attempts.length, 1);
+  assert.equal(s.attempts[0].correct, true);
+  assert.equal(s.attempts[0].grade, 3);
+  assert.equal(s.attempts[0].timestamp, FSRS_NOW);
+  // Scheduling hint updated too.
+  assert.equal(s.itemState.a.reviewCount, 1);
+  assert.equal(s.itemState.a.lastGrade, 3);
+  // A failing grade logs an incorrect attempt.
+  recordAttemptWithGrade(s, { objective: "a", grade: 0, now: FSRS_NOW });
+  assert.equal(s.attempts[1].correct, false);
+  // Explicit `now` is mandatory.
+  assert.throws(() => recordAttemptWithGrade(s, { objective: "a", grade: 3 }), /now/i);
+});
+
+test("recordAttemptWithGrade: itemState presence/mutation does NOT affect the mastery() verdict", () => {
+  const s = newSessionWithFSRS({ topic: "t", objectives: ["a"] });
+  // 3 correct graded attempts -> mastery ready (reads attempts only).
+  recordAttemptWithGrade(s, { objective: "a", grade: 3, now: FSRS_NOW });
+  recordAttemptWithGrade(s, { objective: "a", grade: 4, now: FSRS_NOW });
+  recordAttemptWithGrade(s, { objective: "a", grade: 3, now: FSRS_NOW });
+  const before = mastery(s);
+  assert.equal(before.ready, true);
+  // Corrupt then delete itemState -> mastery verdict must be identical.
+  s.itemState.a.stability = -999;
+  assert.deepEqual(mastery(s), before);
+  delete s.itemState.a;
+  assert.deepEqual(mastery(s), before);
 });
