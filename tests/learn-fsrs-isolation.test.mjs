@@ -88,3 +88,39 @@ test("CAN-IT-FAIL: invalid item state cannot ship a nonsensical interval to a le
   const good = computeNextReview(initializeItem({ stability: 5 }), { desiredRetention: 0.9, now: NOW });
   assert.ok(good.daysUntilDue > 0 && Number.isFinite(good.nextReviewAtMs));
 });
+
+test("CAN-IT-FAIL (write path): grading a corrupt item heals before grading, never emitting NaN/inf state", () => {
+  // The self-heal guarantee must also cover the GRADING/WRITE path, not only the ranking/READ path.
+  // gradeAttempt divides by item.stability when computing retrievability; a corrupt stored stability
+  // (NaN / Infinity / negative) must be healed BEFORE grading, or the write silently persists a
+  // nonsensical item-state that then ships a bad interval to the learner.
+  for (const badStability of [NaN, Infinity, -Infinity, -999, 0]) {
+    const s = newSessionWithFSRS({ topic: "iso", objectives: ["X"] });
+    recordAttemptWithGrade(s, { objective: "X", grade: 3, now: NOW });
+    s.itemState.X.stability = badStability; // corrupt AFTER a clean grade
+    // Grade the already-corrupt entry again. This is the write path the read-path heal never covers.
+    recordAttemptWithGrade(s, { objective: "X", grade: 3, now: later(1) });
+    const after = s.itemState.X;
+    assert.ok(
+      Number.isFinite(after.stability) && after.stability > 0,
+      `write-path grade over corrupt stability=${badStability} must yield finite positive stability, got ${after.stability}`,
+    );
+    assert.ok(
+      after.difficulty >= 0.2 && after.difficulty <= 1.0,
+      `difficulty stays in range after grading a corrupt item (${after.difficulty})`,
+    );
+    // And the healed, graded state must schedule a sane interval (no throw, positive days).
+    const { daysUntilDue } = computeNextReview(after, { desiredRetention: 0.9, now: later(2) });
+    assert.ok(Number.isFinite(daysUntilDue) && daysUntilDue > 0, `sane interval after write-path heal (${badStability})`);
+  }
+
+  // Corrupt difficulty on the write path must likewise heal, not propagate out of range.
+  const s2 = newSessionWithFSRS({ topic: "iso", objectives: ["Y"] });
+  recordAttemptWithGrade(s2, { objective: "Y", grade: 3, now: NOW });
+  s2.itemState.Y.difficulty = 42; // out of range
+  recordAttemptWithGrade(s2, { objective: "Y", grade: 4, now: later(1) });
+  assert.ok(
+    s2.itemState.Y.difficulty >= 0.2 && s2.itemState.Y.difficulty <= 1.0,
+    `out-of-range difficulty healed on the write path (${s2.itemState.Y.difficulty})`,
+  );
+});
