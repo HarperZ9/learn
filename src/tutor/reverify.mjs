@@ -19,6 +19,7 @@ import { join } from "node:path";
 import { Ledger } from "../accountability/ledger.mjs";
 import { observe } from "../accountability/witness.mjs";
 import { newSession, recordAttempt, mastery, masteryReceipt } from "./tutor.mjs";
+import { reverifyLessonReceipt } from "./prooflessonverify.mjs";
 
 export const CHAIN_BROKEN = "CHAIN_BROKEN";
 export const VERDICT_MISMATCH = "VERDICT_MISMATCH";
@@ -94,6 +95,8 @@ function checkVerdict(receipt, failures) {
 // (structurally uncheckable, e.g. chainless). The witness is a content-addressed digest of the
 // re-check summary, so the outcome itself is carried as evidence, not as prose.
 export function reverifyReceipt(receipt) {
+  // Proof-lesson receipts carry their own binding evidence; same verdicts, same typed codes.
+  if (receipt && typeof receipt === "object" && receipt.kind === "proof-lesson") return reverifyLessonReceipt(receipt);
   const reasons = structuralReasons(receipt);
   if (reasons.length) return { verdict: "UNVERIFIED", failures: [], reasons, summary: null, witness: null };
 
@@ -114,14 +117,15 @@ export function reverifyReceipt(receipt) {
 }
 
 // reverifyFiles(dir, id, {file}) -> {ok, results[, error]}. Without --file it re-verifies every
-// receipt the CLI emits for a session (tutor/<id>.mastery.json, tutor/<id>.study-receipt.json).
+// receipt the CLI emits for a session (tutor/<id>.mastery.json, tutor/<id>.study-receipt.json,
+// tutor/<id>.prooflesson.json).
 // `ok` is true only when every checked receipt re-verifies as VERIFIED; UNVERIFIED is fail-closed.
 export function reverifyFiles(dir, id, { file = null } = {}) {
   const candidates = file
     ? [file]
-    : [join(dir, "tutor", id + ".mastery.json"), join(dir, "tutor", id + ".study-receipt.json")].filter((p) => existsSync(p));
+    : [join(dir, "tutor", id + ".mastery.json"), join(dir, "tutor", id + ".study-receipt.json"), join(dir, "tutor", id + ".prooflesson.json")].filter((p) => existsSync(p));
   if (!candidates.length) {
-    return { ok: false, results: [], error: `no tutor receipt found for ${id} (looked for tutor/${id}.mastery.json and tutor/${id}.study-receipt.json; run \`learn tutor receipt\` or \`learn tutor study-receipt\` first)` };
+    return { ok: false, results: [], error: `no tutor receipt found for ${id} (looked for tutor/${id}.mastery.json, tutor/${id}.study-receipt.json, and tutor/${id}.prooflesson.json; run \`learn tutor receipt\`, \`learn tutor study-receipt\`, or \`learn tutor prooflesson\` first)` };
   }
   const results = candidates.map((p) => {
     let receipt;
@@ -143,7 +147,10 @@ export function formatReverify(r, label) {
     }
     for (const why of res.reasons) lines.push(`    ${why}`);
     if (res.verdict === "VERIFIED") {
-      lines.push(`    witnessed: ${res.witness.digest} (${res.summary.entries} entr(ies), head ${res.summary.headHash.slice(0, 12)}, mastery ${res.summary.rederivedReady ? "READY" : "not yet"} re-derived)`);
+      const tail = res.summary.rederivedReady !== undefined
+        ? `mastery ${res.summary.rederivedReady ? "READY" : "not yet"} re-derived`
+        : `lesson verdict ${res.summary.rederivedVerdict} re-derived`;
+      lines.push(`    witnessed: ${res.witness.digest} (${res.summary.entries} entr(ies), head ${res.summary.headHash.slice(0, 12)}, ${tail})`);
     }
   }
   return lines.join("\n");

@@ -18,7 +18,7 @@
 ## Try it
 
 ```bash
-node --test          # 206 tests
+node --test          # 240 tests
 node src/cli.mjs status
 node src/cli.mjs doctor
 ```
@@ -74,6 +74,14 @@ capability matches where you are stuck:
   entry) and the stored mastery verdict must re-derive from the recorded attempts under the
   recorded policy (a divergence is typed `VERDICT_MISMATCH`). A chainless receipt is `UNVERIFIED`,
   never verified; a clean re-check exits 0 with a witnessed summary digest.
+- **Proof-packet lessons** (`prooflesson.mjs`): `learn tutor prooflesson` turns a proof packet
+  (a verified-claim record with sources, hashes, and a MATCH/DRIFT/UNVERIFIABLE verdict) into a
+  lesson you study from: an explanation scaffold that prompts you to derive the reasoning
+  yourself, retrieval questions built from the packet's own fields, and a verifier binding that
+  ties the lesson to the packet's verdict and source hashes. A DRIFT or UNVERIFIABLE packet also
+  yields a typed misconception record (contradicted / overclaim / missing_evidence) asking why
+  the proof attempt failed. The lesson's verdict always equals the packet's verdict, and the
+  emitted lesson receipt is hash-chained and covered by `tutor reverify`.
 
 Underneath the learning loop, the original credential-logistics engine still runs workflows
 (`learn run` / `learn resume`), halts at every graded `assess` step for you to complete yourself,
@@ -95,14 +103,14 @@ and emits a provenance receipt separating automated logistics from your own grad
 - **Release:** `1.5.0`; command `learn`; Node >= 20; zero external dependencies (ES modules,
   `node:test`).
 - **Operator surface:** `learn status`, `learn doctor`, `learn run/resume/verify/receipt`,
-  `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|due|
-  misconceptions|retrieval|explain|predict|score|path|study|study-receipt>`. The zero-dep MCP
-  server (`src/mcp.mjs`) exposes the advisory/read tools: `learn_doctor`, `learn_status`,
-  `learn_verify`, `learn_receipt`, `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`,
-  `learn_tutor_mastery`, `learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`,
-  `learn_tutor_reverify`, and `learn_visualize_dry_run`. Actuation (real runs) stays
-  operator-driven on the CLI.
-- **Test floor:** 206 tests across the runtime, adapters, receipt, tutor/learning-loop, and telos
+  `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
+  prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt>`. The
+  zero-dep MCP server (`src/mcp.mjs`) exposes the advisory/read tools: `learn_doctor`,
+  `learn_status`, `learn_verify`, `learn_receipt`, `learn_dry_run`, `learn_tutor_plan`,
+  `learn_tutor_record`, `learn_tutor_mastery`, `learn_tutor_due`, `learn_tutor_studyplan`,
+  `learn_tutor_misconceptions`, `learn_tutor_reverify`, `learn_tutor_prooflesson`, and
+  `learn_visualize_dry_run`. Actuation (real runs) stays operator-driven on the CLI.
+- **Test floor:** 240 tests across the runtime, adapters, receipt, tutor/learning-loop, and telos
   interop, including a falsifiable test per integrity invariant.
 - **Housekeeping:** see [CHANGELOG.md](CHANGELOG.md) for version history.
 
@@ -141,7 +149,9 @@ a render, a visualization, or a pending prediction as if it were a graded answer
   (cloze generation + interleaving), `explain.mjs` (self-explanation grading), `predict.mjs`
   (predict-then-observe), `map.mjs` (concept map + prerequisite gating), `study.mjs` (the
   orchestrator + witnessed study-receipt), `reverify.mjs` (receipt re-verification: recomputed
-  chain + re-derived verdict, typed failures), `tutorstore.mjs` (session persistence).
+  chain + re-derived verdict, typed failures), `prooflesson.mjs` / `prooflessonverify.mjs`
+  (proof-packet -> lesson: scaffold + retrieval questions + verifier binding, typed misconception
+  records, chained lesson receipts covered by reverify), `tutorstore.mjs` (session persistence).
 - `interop/telos.mjs`: the visualization bridge. `concept -> math_physics scene-spec -> witnessed
   AID render`. Delegates rendering to the telos engine over `LEARN_TELOS_CMD` (fail-closed); learn
   never imports telos internals or picks the renderer profile.
@@ -169,6 +179,10 @@ a render, a visualization, or a pending prediction as if it were a graded answer
    the hash chain and re-derives the mastery verdict; failures are typed (`CHAIN_BROKEN`,
    `VERDICT_MISMATCH`), author-controlled booleans never gate, and a chainless receipt is
    `UNVERIFIED`, never verified.
+9. A proof-packet lesson never outruns its packet. The lesson's verdict is copied from the
+   packet's verdict with no override path, a forged verdict enum is rejected, the scaffold prompts
+   the learner instead of dumping the packet's reasoning, and the chained lesson receipt fails
+   reverify (`CHAIN_BROKEN` / `VERDICT_MISMATCH`) when tampered.
 
 ## Interop
 

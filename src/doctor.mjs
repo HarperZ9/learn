@@ -12,6 +12,7 @@ import { buildReceipt } from "./receipt/receipt.mjs";
 import { newSession, recordAttempt, mastery, recordVisualization } from "./tutor/tutor.mjs";
 import { recordPrediction } from "./tutor/predict.mjs";
 import { reverifySelfCheck } from "./tutor/reverify.mjs";
+import { proofLessonSelfCheck } from "./tutor/prooflessonverify.mjs";
 
 export async function doctor() {
   const checks = [];
@@ -74,6 +75,12 @@ export async function doctor() {
   // known-bad fixture (tampered chain entry, hand-edited verdict, chainless receipt). A verifier
   // that cannot fail on a known-bad input is not a verifier.
   add("tutor.reverify_rejects_known_bad", reverifySelfCheck());
+
+  // 9. the proof-lesson pipeline can FAIL: a clean packet derives a lesson whose verdict is the
+  // packet's verdict and whose scaffold never dumps the packet's reasoning, while each known-bad
+  // input is rejected (forged verdict enum, tampered chain entry, verdict flipped MATCH-from-DRIFT,
+  // chainless receipt). A verifier that cannot fail on a known-bad input is not a verifier.
+  add("tutor.prooflesson_rejects_known_bad", proofLessonSelfCheck());
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };

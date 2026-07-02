@@ -37,6 +37,7 @@ node src/cli.mjs tutor study mysession --now 2026-06-30T00:00:00Z
 node src/cli.mjs tutor study-receipt mysession --now 2026-06-30T00:00:00Z
 node src/cli.mjs tutor receipt mysession
 node src/cli.mjs tutor reverify mysession
+node src/cli.mjs tutor prooflesson mylesson --packet packet.json
 ```
 
 `learn tutor study` is the one command to run first on an existing session: it composes what is
@@ -48,6 +49,16 @@ re-derivation) instead of trusting its stored booleans. It exits 0 with a witnes
 when every checked receipt re-verifies clean; a tampered chain is typed `CHAIN_BROKEN`, an edited
 verdict is typed `VERDICT_MISMATCH`, and a chainless receipt is `UNVERIFIED`, never verified
 (all exit 1). Use `--file <receipt.json>` to check a single receipt file directly.
+
+`learn tutor prooflesson <id> --packet <packet.json>` turns a proof packet (a verified-claim
+record carrying a claim, source refs with content hashes, and a MATCH/DRIFT/UNVERIFIABLE verdict)
+into a lesson: an explanation scaffold that prompts you to derive the reasoning yourself,
+retrieval-practice questions built from the packet's own fields, and a verifier binding tying the
+lesson to the packet's verdict, id, and source hashes. DRIFT and UNVERIFIABLE packets also yield
+a typed misconception record (contradicted / overclaim / missing_evidence) asking why the proof
+attempt failed. The lesson's verdict always equals the packet's verdict; a packet with an illegal
+verdict is rejected and nothing is written. The emitted `tutor/<id>.prooflesson.json` is
+hash-chained and covered by `learn tutor reverify <id>`.
 
 ## Basic usage: the credential/coursework engine
 
@@ -70,7 +81,7 @@ node src/mcp.mjs
 Exposes the advisory/read tools (`learn_doctor`, `learn_status`, `learn_verify`, `learn_receipt`,
 `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`, `learn_tutor_mastery`,
 `learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`, `learn_tutor_reverify`,
-`learn_visualize_dry_run`) over stdio JSON-RPC. Actuation (real workflow runs) stays
+`learn_tutor_prooflesson`, `learn_visualize_dry_run`) over stdio JSON-RPC. Actuation (real workflow runs) stays
 operator-driven on the CLI; the MCP surface never performs a real course action or answers a
 graded step.
 

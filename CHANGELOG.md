@@ -5,6 +5,33 @@ behind the `feat/learning-loop` branch and reviewed before merge.
 
 ## Unreleased
 
+- `tutor/prooflesson.mjs` + `tutor/prooflessonverify.mjs`: proof-packet -> lesson. `proofLesson`
+  consumes a proof-surface-style packet JSON (`version`, `packet_id`, `claim`, `scope`,
+  `sources[{ref,sha256}]`, `verdicts.overall`; unknown wedge-specific blocks are treated as
+  opaque) and derives a lesson that preserves the packet's own evidence surface: source refs
+  (never bodies), the claim, the packet's verdict, an explanation scaffold (numbered prompts for
+  the learner to derive the reasoning; the packet's decision reasoning is never dumped),
+  retrieval-practice questions derived from the packet's own fields (including "what evidence
+  would falsify this claim"), and a verifier binding (verdict + packet_id + source hashes). The
+  lesson verdict is copied from the packet and from nowhere else; the derived lesson is frozen,
+  so a lesson claiming MATCH from a DRIFT packet is impossible by construction, and a forged
+  verdict enum is rejected up front.
+- `misconceptionFromPacket`: for DRIFT / UNVERIFIABLE packets, a typed misconception record
+  (`packet_id`, `verdict`, `misconception_class`: `contradicted` for DRIFT, `overclaim` for
+  UNVERIFIABLE with recorded sources, `missing_evidence` for UNVERIFIABLE without) whose prompt
+  asks the learner WHY the proof attempt failed; a MATCH packet yields none.
+- `proofLessonReceipt`: the lesson receipt hash-chains a packet binding, one entry per source
+  ref+hash, and the canonical lesson digest through the existing ledger machinery, and
+  `learn tutor reverify` covers it: a tampered entry is `CHAIN_BROKEN`, a flipped verdict or
+  edited lesson body is `VERDICT_MISMATCH`, and a chainless or illegal-enum receipt is
+  `UNVERIFIED`, never verified.
+- CLI: `learn tutor prooflesson <id> --packet <packet.json>` writes
+  `tutor/<id>.prooflesson.json` and exits 1 on a rejected packet, writing nothing.
+- MCP: `learn_tutor_prooflesson` (advisory, read-only; derives the lesson + misconception from an
+  inline packet or a packet file, writes nothing).
+- `doctor` gains `tutor.prooflesson_rejects_known_bad`: a clean packet must derive and re-verify,
+  and each known-bad input must be rejected (forged verdict enum, tampered chain entry, verdict
+  flipped MATCH-from-DRIFT, chainless receipt).
 - `tutor/reverify.mjs`: tutor-receipt re-verification with typed failure codes. `reverifyReceipt`
   recomputes a receipt's own evidence instead of trusting its stored booleans (`verified` /
   `ledgerVerified` are author-controlled and deliberately ignored): the hash chain over the
