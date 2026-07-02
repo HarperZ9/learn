@@ -6,20 +6,65 @@
 // NOT supply answers to the real graded credential assessment — that is taken by the operator via
 // the run engine, whose `assess` steps always halt. Practice ≠ the certified exam.
 import { Ledger } from "../accountability/ledger.mjs";
+import { initializeItems, recordAttemptWithGrade as recordItemGrade } from "./itemscheduler.mjs";
 
 export function newSession({ topic, objectives = [] }) {
   return { topic, objectives: [...objectives], attempts: [] };
 }
 
+// newSessionWithFSRS({topic, objectives}) -> a session with per-item FSRS scheduling state seeded.
+// Same shape as newSession() plus session.itemState pre-populated for each objective. The mastery
+// path is unchanged: mastery()/masteryReceipt() still read session.attempts ONLY.
+export function newSessionWithFSRS({ topic, objectives = [] }) {
+  const s = newSession({ topic, objectives });
+  initializeItems(s, objectives);
+  return s;
+}
+
 // Record the operator's OWN answer to a PRACTICE question, and whether it was correct.
-export function recordAttempt(session, { objective, prompt, answer, correct, feedback = "" }) {
-  session.attempts.push({
+// `grade` (0-4) and `timestamp` (ISO) are OPTIONAL scheduling metadata for the FSRS path; they are
+// only written to the attempt when provided, so the existing attempt shape is unchanged by default.
+export function recordAttempt(session, { objective, prompt, answer, correct, feedback = "", grade, timestamp }) {
+  const attempt = {
     objective,
     prompt: String(prompt).slice(0, 500),
     answer: String(answer).slice(0, 2000),
     correct: !!correct,
     feedback: String(feedback).slice(0, 800),
-  });
+  };
+  if (grade !== undefined && grade !== null) attempt.grade = grade;
+  if (timestamp !== undefined && timestamp !== null) attempt.timestamp = timestamp;
+  session.attempts.push(attempt);
+  return session;
+}
+
+// Map a coarse correct/incorrect into an FSRS grade when no explicit grade is given:
+// false -> 1 (slip), true -> 3 (review). Explicit grades (0-4) override.
+function gradeFromCorrect(correct) {
+  return correct ? 3 : 1;
+}
+
+// recordAttemptWithGrade(session, {objective, grade, correct, now, ...}) -> session.
+//
+// The FSRS-aware recording path. It does BOTH, in order:
+//   1) logs the attempt to session.attempts (the witnessed graded truth) via recordAttempt(), with
+//      the grade + `now` timestamp attached for the audit trail; and
+//   2) updates session.itemState[objective] via the item scheduler (the derived scheduling hint).
+//
+// INTEGRITY: the witnessed log is written first and is authoritative; itemState is a hint layered
+// on top. `correct` for the mastery gate is derived from the grade when not passed explicitly
+// (grade >= 3 counts as correct), so the two stay consistent. `now` is required (no Date.now()).
+export function recordAttemptWithGrade(session, { objective, prompt = "", answer = "", feedback = "", grade, correct, now } = {}) {
+  if (!objective) throw new Error("recordAttemptWithGrade requires an `objective`");
+  if (now === undefined || now === null) {
+    throw new Error("recordAttemptWithGrade requires an explicit `now` (ISO string or epoch ms)");
+  }
+  const g = grade === undefined || grade === null ? gradeFromCorrect(correct) : grade;
+  const isCorrect = correct === undefined || correct === null ? g >= 3 : !!correct;
+  const timestamp = typeof now === "number" ? new Date(now).toISOString() : now;
+
+  recordAttempt(session, { objective, prompt, answer, correct: isCorrect, feedback, grade: g, timestamp });
+  recordItemGrade(session, { objective, grade: g, now });
   return session;
 }
 
