@@ -3,8 +3,26 @@
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
-## Unreleased
+## 1.6.0
 
+- `tutor/fsrs.mjs` + `tutor/itemscheduler.mjs`: opt-in FSRS-class adaptive memory model.
+  Per-item *difficulty* / *stability* / *retrievability* with a user-set retention target, so the
+  scheduler decays each item on its own forgetting curve and next-selects the item you are most
+  likely to have forgotten (retrievability-ranked), rather than re-surfacing whole objectives on a
+  fixed Leitner ladder. `fsrs.mjs` is pure math (no I/O, no `Date.now()` — `now` is always
+  injected); `itemscheduler.mjs` owns the derived `session.itemState` and self-heals corrupt or
+  missing state on BOTH the ranking/read path (`sortByRetrievability`/`selectNextItem`) and the
+  grading/write path (`recordAttemptWithGrade` heals before grading), so a nonsensical interval can
+  never reach a learner and a corrupt stored stability can never contaminate the grade math. Enabled per session:
+  `newSessionWithFSRS` / `tutor.recordAttemptWithGrade` (grades 0-4), and threaded behind a
+  default-false `useFSRS` flag through `schedule.reviewState`/`due` and `study.studyPlan`/
+  `studyReceipt`. Wired into the CLI (`plan --enable-fsrs`, `record --grade/--now`, `study` /
+  `study-receipt` / `due --use-fsrs/--desired-retention`) and MCP (`enableFsrs`, `grade`, `now`,
+  `useFsrs`, `desiredRetention`). INTEGRITY: the mastery-gate still reads `session.attempts` only —
+  `itemState` is a scheduling hint, never a verdict — proven by `learn-fsrs-isolation.test.mjs`
+  (corrupt/delete itemState, mastery and study-receipt unchanged). Fully backward compatible: all
+  prior tests pass unchanged, `useFSRS` defaults false, and the flags fall back to the Leitner/
+  interleave path on legacy sessions with no `itemState`.
 - `tutor/prooflesson.mjs` + `tutor/prooflessonverify.mjs`: proof-packet -> lesson. `proofLesson`
   consumes a proof-surface-style packet JSON (`version`, `packet_id`, `claim`, `scope`,
   `sources[{ref,sha256}]`, `verdicts.overall`; unknown wedge-specific blocks are treated as
