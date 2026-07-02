@@ -33,6 +33,7 @@ export const TOOLS = [
   { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, interleaved order, prerequisite readiness, mastery-gate verdict).", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] } }, required: ["sessionId", "now"] } },
   { name: "learn_tutor_misconceptions", description: "Advisory, read-only: return the ranked misconception aggregation (wrong attempts + the operator's own feedback) for a saved tutor session.", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_tutor_reverify", description: "Advisory, read-only: re-verify a session's emitted tutor receipts from their own recorded evidence (recomputed hash chain + re-derived mastery verdict). Failures are typed CHAIN_BROKEN / VERDICT_MISMATCH; a chainless receipt is UNVERIFIED, never verified.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, file: { type: "string" } }, required: ["sessionId"] } },
+  { name: "learn_tutor_prooflesson", description: "Advisory, read-only: derive a lesson from a proof packet (source refs, claim, verdict, explanation scaffold, retrieval questions, verifier binding) plus a typed misconception record for DRIFT/UNVERIFIABLE packets. The lesson verdict always equals the packet verdict; a forged verdict enum is rejected; nothing is written.", inputSchema: { type: "object", properties: { packet: { type: "object" }, packetPath: { type: "string" } } } },
 ];
 
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
@@ -80,6 +81,12 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
     }
     case "learn_tutor_reverify": {
       return { sessionId: args.sessionId, ...reverifyFiles(dir, args.sessionId, { file: args.file }) };
+    }
+    case "learn_tutor_prooflesson": {
+      const { proofLesson, misconceptionFromPacket } = await import("./tutor/prooflesson.mjs");
+      const packet = args.packet || (args.packetPath ? JSON.parse(readFileSync(args.packetPath, "utf8")) : null);
+      if (!packet) throw new Error("learn_tutor_prooflesson requires `packet` (object) or `packetPath` (file)");
+      return { lesson: proofLesson(packet), misconception: misconceptionFromPacket(packet) };
     }
     default: throw new Error(`unknown tool: ${name}`);
   }
