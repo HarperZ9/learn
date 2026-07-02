@@ -29,7 +29,8 @@ what exact material it relied on, what it changed, what verified, and what remai
 - `node src/cli.mjs verify ID` and `node src/cli.mjs receipt ID` for ledger replay and receipt
   emission (JSON, Markdown, HTML).
 - `node src/cli.mjs tutor plan|record|due|misconceptions|retrieval|explain|predict|score|path|
-  study|study-receipt|mastery` for the learning loop.
+  study|study-receipt|mastery` for the learning loop, and `tutor reverify` to recompute an emitted
+  receipt's evidence (typed `CHAIN_BROKEN` / `VERDICT_MISMATCH` failures; exit 0 only when clean).
 - `node src/mcp.mjs` for a stdio MCP host exposing the advisory/read surface only.
 
 ## Context Envelope Contribution
