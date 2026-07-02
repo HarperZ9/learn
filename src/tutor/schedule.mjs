@@ -11,7 +11,36 @@
 // derived from the objective's current consecutive-correct streak. A wrong attempt resets the
 // streak (and interval) to the Leitner box 1 (1 day).
 
+import { sortByRetrievability } from "./itemscheduler.mjs";
+
 const LADDER_DAYS = [1, 2, 4, 7, 14, 30, 60]; // Leitner-style box intervals, indexed by streak
+
+// Does this session carry per-item FSRS scheduling state? The FSRS path is opt-in (useFSRS flag)
+// AND requires itemState to be present; if the flag is set but no itemState exists, callers fall
+// back to Leitner so the flag is safely advisory on legacy sessions.
+function hasItemState(session) {
+  return !!(session && session.itemState && Object.keys(session.itemState).length > 0);
+}
+
+// FSRS reviewState: retrievability-based per-item scheduling. Returns the same {objective, dueAt,
+// due} contract as the Leitner path plus {retrievability, intervalDays}, so downstream due()/study
+// composition works unchanged. dueAt = now + daysUntilDue (the instant recall would decay to the
+// retention target); an item is "due" when its modelled retrievability is already at/under target.
+function reviewStateFSRS(session, nowMs, desiredRetention) {
+  const ranked = sortByRetrievability(session, { now: nowMs, desiredRetention });
+  return ranked.map(({ objective, retrievability, daysUntilDue }) => {
+    const item = session.itemState[objective] || {};
+    const dueAtMs = nowMs + Math.round(daysUntilDue * 86400000);
+    return {
+      objective,
+      seen: item.reviewCount || 0,
+      retrievability,
+      intervalDays: daysUntilDue,
+      dueAt: new Date(dueAtMs).toISOString(),
+      due: retrievability <= desiredRetention,
+    };
+  });
+}
 
 function toEpochMs(now) {
   if (now === undefined || now === null) {
@@ -52,8 +81,11 @@ function foldAttempts(attempts) {
 // last recording (or persist the returned dueAt) and compare against dueAt directly; due() below
 // is the convenience form of that comparison for the common case of "evaluate freshness against
 // an explicit prior dueAt".
-export function reviewState(session, { now } = {}) {
+export function reviewState(session, { now, useFSRS = false, desiredRetention = 0.9 } = {}) {
   const nowMs = toEpochMs(now);
+  if (useFSRS && hasItemState(session)) {
+    return reviewStateFSRS(session, nowMs, desiredRetention);
+  }
   const objectives = session.objectives && session.objectives.length
     ? session.objectives
     : [...new Set(session.attempts.map((a) => a.objective))];
@@ -80,8 +112,18 @@ export function reviewState(session, { now } = {}) {
 // anything due right now, freshly evaluated" (only never-practiced objectives qualify, since a
 // clock anchored at `now` itself can't already be in the past). Passing an earlier `asOf` answers
 // "given objectives were last scheduled as of `asOf`, what's due by `now`".
-export function due(session, { now, asOf } = {}) {
+export function due(session, { now, asOf, useFSRS = false, desiredRetention = 0.9 } = {}) {
   const nowMs = toEpochMs(now);
+
+  // FSRS path: retrievability is evaluated directly at `now` (no separate anchor clock — each item
+  // carries its own lastReviewAt), so an item is due exactly when its modelled recall has decayed
+  // to/under the retention target. Most-at-risk (lowest retrievability) first.
+  if (useFSRS && hasItemState(session)) {
+    return reviewState(session, { now, useFSRS: true, desiredRetention })
+      .filter((s) => s.due)
+      .sort((a, b) => a.retrievability - b.retrievability);
+  }
+
   const anchorAt = asOf === undefined ? now : asOf;
   const states = reviewState(session, { now: anchorAt });
 
