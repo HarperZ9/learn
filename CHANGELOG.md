@@ -3,7 +3,7 @@
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
-## Unreleased
+## 1.6.0
 
 - `tutor/fsrs.mjs` + `tutor/itemscheduler.mjs`: opt-in FSRS-class adaptive memory model.
   Per-item *difficulty* / *stability* / *retrievability* with a user-set retention target, so the
@@ -11,7 +11,9 @@ behind the `feat/learning-loop` branch and reviewed before merge.
   likely to have forgotten (retrievability-ranked), rather than re-surfacing whole objectives on a
   fixed Leitner ladder. `fsrs.mjs` is pure math (no I/O, no `Date.now()` — `now` is always
   injected); `itemscheduler.mjs` owns the derived `session.itemState` and self-heals corrupt or
-  missing state so a nonsensical interval can never reach a learner. Enabled per session:
+  missing state on BOTH the ranking/read path (`sortByRetrievability`/`selectNextItem`) and the
+  grading/write path (`recordAttemptWithGrade` heals before grading), so a nonsensical interval can
+  never reach a learner and a corrupt stored stability can never contaminate the grade math. Enabled per session:
   `newSessionWithFSRS` / `tutor.recordAttemptWithGrade` (grades 0-4), and threaded behind a
   default-false `useFSRS` flag through `schedule.reviewState`/`due` and `study.studyPlan`/
   `studyReceipt`. Wired into the CLI (`plan --enable-fsrs`, `record --grade/--now`, `study` /

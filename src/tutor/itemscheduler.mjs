@@ -56,7 +56,12 @@ export function recordAttemptWithGrade(session, { objective, grade, now } = {}) 
   const state = ensureItemState(session);
   if (!state[id]) state[id] = freshItem(typeof now === "number" ? new Date(now).toISOString() : now || null);
 
-  const prev = state[id];
+  // Heal-before-grade: the write path gets the SAME self-heal guarantee as the read/ranking path.
+  // gradeAttempt divides by item.stability when modelling retrievability, so a corrupt stored value
+  // (NaN / Infinity / negative / out-of-range difficulty) must be clamped BEFORE it feeds the grade
+  // math — otherwise a nonsensical (e.g. NaN) stability would be persisted and later ship a bad
+  // interval to the learner. healItem() clamps in place and returns the sanitized entry.
+  const prev = healItem(session, id);
   const updated = gradeAttempt(prev, { grade, now });
   state[id] = { ...prev, ...updated, createdAt: prev.createdAt ?? (typeof now === "number" ? new Date(now).toISOString() : now) };
   return session;
