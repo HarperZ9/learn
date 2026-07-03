@@ -3,6 +3,27 @@
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
+## Unreleased
+
+- `tutor/fsrsderive.mjs`: make the FSRS schedule a **re-derivable function of the witnessed graded
+  attempt log**. `deriveItemStates(attempts)` replays the recorded scored attempts (each carries its
+  `grade` + `timestamp`) through the same pure `gradeAttempt()` math the live scheduler uses, so it
+  reconstructs `session.itemState` bit-for-bit from `session.attempts` alone (proven by a parity test
+  against the live state). `deriveScheduleReceipt(session)` audits the cached hint against that clean
+  replay and emits a `MATCH` / `DRIFT` / `NO_FSRS_LOG` verdict plus a hash-chained ledger over the
+  graded attempts; the log-derived state is authoritative, so a stale or tampered cache is flagged as
+  `DRIFT` with a per-field diff rather than trusted. `optimizeParameters(attempts)` adds an *advisory*
+  per-learner fit: one initial-difficulty prior per objective, fitted from that learner's own accuracy
+  (a documented heuristic prior, not a full FSRS weight optimization); it never moves the audit
+  verdict or the mastery gate. Wired into the CLI (`tutor derive-schedule <id> [--optimize]`, writes
+  `tutor/<id>.derive-schedule.json`, non-zero exit on DRIFT) and MCP (`learn_tutor_derive_schedule`,
+  `optimize`). A new `doctor` invariant `tutor.schedule_rederivable_from_log` proves the audit can
+  FAIL: a clean session re-derives to MATCH and a tampered cache is caught as DRIFT. INTEGRITY
+  unchanged: `fsrsderive.mjs` is pure, never calls `Date.now()`, never grades, never appends to
+  `session.attempts`, and never feeds the mastery gate: `itemState` stays a hint, the witnessed log
+  stays the truth. Backward compatible: all prior tests pass; 14 new tests across
+  `learn-fsrs-derive.test.mjs` (10) and `learn-fsrs-derive-cli.test.mjs` (4).
+
 ## 1.6.0
 
 - `tutor/fsrs.mjs` + `tutor/itemscheduler.mjs`: opt-in FSRS-class adaptive memory model.

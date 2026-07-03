@@ -68,6 +68,24 @@ capability matches where you are stuck:
   the "ready" line. The flags are advisory — on a session created without `--enable-fsrs` they fall
   back to the Leitner/interleave path. Timestamps are always injected (`--now`), so schedules are
   fully deterministic and re-checkable.
+- **Re-derivable schedule + per-learner fit** (`fsrsderive.mjs`): the FSRS schedule is not just a
+  stored blob, it is a *re-derivable function of your recorded scored attempts*. `derive-schedule`
+  replays the witnessed graded log (each attempt carries its `grade` and `timestamp`) to rebuild the
+  scheduling state from scratch, then audits it against the cached `itemState`:
+
+  ```sh
+  learn tutor derive-schedule sess              # verdict MATCH / DRIFT / NO_FSRS_LOG
+  learn tutor derive-schedule sess --optimize   # also fit a per-learner initial-difficulty prior
+  ```
+
+  The log-derived state is authoritative, so a stale or tampered cache is caught as **DRIFT** with a
+  per-field diff (and a non-zero exit), never silently trusted. The receipt carries a hash-chained
+  ledger over the graded attempts, so it is tamper-evident like every other receipt in `learn`.
+  `--optimize` is *advisory*: it fits one initial-difficulty prior per objective from your own
+  accuracy on that objective (all-correct history => easier start, all-wrong => harder). It is a
+  documented heuristic prior, not a full FSRS weight optimization, and it never changes the audit
+  verdict or the mastery gate. Like everything above, `itemState` is a hint; the mastery-gate still
+  reads your witnessed `attempts` only.
 - **Retrieval practice from your own material** (`retrieval.mjs`): turns claims your *own* draft
   already asserts (via `assist`) into blanked cloze prompts you answer from memory, each carrying
   its source so you can check yourself after, not before.
