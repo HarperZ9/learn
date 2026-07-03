@@ -13,6 +13,8 @@ import { newSession, recordAttempt, mastery, recordVisualization } from "./tutor
 import { recordPrediction } from "./tutor/predict.mjs";
 import { reverifySelfCheck } from "./tutor/reverify.mjs";
 import { proofLessonSelfCheck } from "./tutor/prooflessonverify.mjs";
+import { newSessionWithFSRS, recordAttemptWithGrade } from "./tutor/tutor.mjs";
+import { deriveScheduleReceipt } from "./tutor/fsrsderive.mjs";
 
 export async function doctor() {
   const checks = [];
@@ -81,6 +83,18 @@ export async function doctor() {
   // input is rejected (forged verdict enum, tampered chain entry, verdict flipped MATCH-from-DRIFT,
   // chainless receipt). A verifier that cannot fail on a known-bad input is not a verifier.
   add("tutor.prooflesson_rejects_known_bad", proofLessonSelfCheck());
+
+  // 10. the FSRS schedule is a RE-DERIVABLE function of the witnessed graded log, and the audit can
+  // FAIL: a clean session re-derives to MATCH, and tampering the cached itemState (which never feeds
+  // the mastery gate) is caught as DRIFT rather than trusted. A schedule audit that cannot detect a
+  // tampered cache is not an audit.
+  const fs = newSessionWithFSRS({ topic: "doctor-fsrs", objectives: ["x"] });
+  recordAttemptWithGrade(fs, { objective: "x", grade: 3, now: "2026-06-30T00:00:00.000Z" });
+  recordAttemptWithGrade(fs, { objective: "x", grade: 4, now: "2026-07-02T00:00:00.000Z" });
+  const cleanVerdict = deriveScheduleReceipt(fs).verdict;
+  fs.itemState.x.stability = 99999; // tamper the cached hint
+  const tamperedVerdict = deriveScheduleReceipt(fs).verdict;
+  add("tutor.schedule_rederivable_from_log", cleanVerdict === "MATCH" && tamperedVerdict === "DRIFT");
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };
