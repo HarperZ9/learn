@@ -199,7 +199,20 @@ export async function main(argv, { dir = process.cwd() } = {}) {
       writeFileSync(join(dir, "tutor", id + ".study-receipt.json"), JSON.stringify(r, null, 2));
       return { code: 0, out: `tutor study-receipt ${id}: verified ${r.verified}, mastery ${r.mastery.ready ? "READY" : "not yet"} -> tutor/${id}.study-receipt.json` };
     }
-    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt|reverify|prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt> <id> ..." };
+    if (sub === "derive-schedule") {
+      const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
+      const { deriveScheduleReceipt } = await import("./tutor/fsrsderive.mjs");
+      const r = deriveScheduleReceipt(s, { optimize: has("--optimize") });
+      mkdirSync(join(dir, "tutor"), { recursive: true });
+      writeFileSync(join(dir, "tutor", id + ".derive-schedule.json"), JSON.stringify(r, null, 2));
+      const drift = r.perObjective.filter((p) => !p.match).map((p) => p.objective);
+      const driftNote = drift.length ? `\n  DRIFT on: ${drift.join(", ")} (cached hint disagrees with the witnessed log; the log is authoritative)` : "";
+      return {
+        code: r.verdict === "DRIFT" ? 1 : 0,
+        out: `tutor derive-schedule ${id}: verdict ${r.verdict}, re-derived ${r.fsrsAttempts} graded attempt(s), ledger ${r.ledgerVerified ? "verified" : "BROKEN"} -> tutor/${id}.derive-schedule.json${driftNote}`,
+      };
+    }
+    return { code: 1, out: "usage: learn tutor <plan|record|mastery|receipt|reverify|prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|derive-schedule> <id> ..." };
   }
   if (cmd === "assist") {
     const { assistArtifacts } = await import("./assist/assist.mjs");

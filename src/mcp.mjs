@@ -33,6 +33,7 @@ export const TOOLS = [
   { name: "learn_tutor_studyplan", description: "Advisory, read-only: return the composed study plan for a saved tutor session (due list, ranked misconceptions, study order, prerequisite readiness, mastery-gate verdict). Set useFsrs (with an FSRS-enabled session) to rank study order by retrievability (most-at-risk first) against desiredRetention.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, now: { type: ["string", "number"] }, seed: { type: ["string", "number"] }, useFsrs: { type: "boolean" }, desiredRetention: { type: "number" } }, required: ["sessionId", "now"] } },
   { name: "learn_tutor_misconceptions", description: "Advisory, read-only: return the ranked misconception aggregation (wrong attempts + the operator's own feedback) for a saved tutor session.", inputSchema: { type: "object", properties: { sessionId: { type: "string" } }, required: ["sessionId"] } },
   { name: "learn_tutor_reverify", description: "Advisory, read-only: re-verify a session's emitted tutor receipts from their own recorded evidence (recomputed hash chain + re-derived mastery verdict). Failures are typed CHAIN_BROKEN / VERDICT_MISMATCH; a chainless receipt is UNVERIFIED, never verified.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, file: { type: "string" } }, required: ["sessionId"] } },
+  { name: "learn_tutor_derive_schedule", description: "Advisory, read-only: re-derive the FSRS scheduling state PURELY from the session's witnessed graded attempt log and compare it to the cached itemState hint. Returns a MATCH/DRIFT/NO_FSRS_LOG verdict plus a hash-chained ledger over the graded attempts; the log-derived state is authoritative, so a stale or tampered cache is flagged as DRIFT with a per-field diff. Set optimize to seed the derivation with a per-learner initial-difficulty prior fitted from the learner's own accuracy. Never grades, never appends attempts, never moves the mastery gate.", inputSchema: { type: "object", properties: { sessionId: { type: "string" }, optimize: { type: "boolean" } }, required: ["sessionId"] } },
   { name: "learn_tutor_prooflesson", description: "Advisory, read-only: derive a lesson from a proof packet (source refs, claim, verdict, explanation scaffold, retrieval questions, verifier binding) plus a typed misconception record for DRIFT/UNVERIFIABLE packets. The lesson verdict always equals the packet verdict; a forged verdict enum is rejected; nothing is written.", inputSchema: { type: "object", properties: { packet: { type: "object" }, packetPath: { type: "string" } } } },
 ];
 
@@ -95,6 +96,11 @@ export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
       const packet = args.packet || (args.packetPath ? JSON.parse(readFileSync(args.packetPath, "utf8")) : null);
       if (!packet) throw new Error("learn_tutor_prooflesson requires `packet` (object) or `packetPath` (file)");
       return { lesson: proofLesson(packet), misconception: misconceptionFromPacket(packet) };
+    }
+    case "learn_tutor_derive_schedule": {
+      const s = loadSession(dir, args.sessionId); if (!s) throw new Error("no tutor session: " + args.sessionId);
+      const { deriveScheduleReceipt } = await import("./tutor/fsrsderive.mjs");
+      return { sessionId: args.sessionId, ...deriveScheduleReceipt(s, { optimize: !!args.optimize }) };
     }
     default: throw new Error(`unknown tool: ${name}`);
   }
