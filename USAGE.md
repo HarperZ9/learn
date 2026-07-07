@@ -6,13 +6,16 @@ prove *you* know it.
 
 ## Install
 
-From a source checkout (no registry package required; zero external dependencies):
+From a source checkout (zero external dependencies, nothing to build):
 
 ```bash
 git clone https://github.com/HarperZ9/learn.git
 cd learn
 node --test          # confirm the suite passes on your machine
 ```
+
+Or install the published release from npm (`npm install -g @harperz9/learn`); the repository can
+run ahead of the latest npm publish, and the repo is the source of truth.
 
 Or add it into another project as a workspace dependency and call it via its exports
 (`@harperz9/learn`, `@harperz9/learn/doctor`, `@harperz9/learn/status`).
