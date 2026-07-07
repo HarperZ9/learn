@@ -9,7 +9,7 @@
 
 [Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [learn](https://github.com/HarperZ9/learn) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
 
-![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/learn/actions/workflows/ci.yml)
 ![version: 1.6.0](https://img.shields.io/badge/version-1.6.0-informational.svg)
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-blue.svg)
 ![deps: none](https://img.shields.io/badge/deps-none-success.svg)
@@ -118,7 +118,7 @@ and emits a provenance receipt separating automated logistics from your own grad
 
 ## Current status
 
-- **Release:** `1.5.0`; command `learn`; Node >= 20; zero external dependencies (ES modules,
+- **Release:** `1.6.0`; command `learn`; Node >= 20; zero external dependencies (ES modules,
   `node:test`).
 - **Operator surface:** `learn status`, `learn doctor`, `learn run/resume/verify/receipt`,
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
