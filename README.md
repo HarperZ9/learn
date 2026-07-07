@@ -31,6 +31,11 @@ yours. Zero external dependencies, Node 20 or newer.
 - **Spaced repetition by default.** An SM-2-lite/Leitner scheduler over your practice log;
   `tutor due` reports which objectives are overdue, most-overdue first. Timestamps are injected
   with `--now`, so every schedule is deterministic and re-checkable.
+- **Re-derivable schedule + per-learner fit.** `tutor derive-schedule` replays your witnessed
+  graded log to rebuild the FSRS scheduling state from scratch, then audits it against the cached
+  `itemState`: a stale or tampered cache is caught as `DRIFT` with a per-field diff, never silently
+  trusted. `--optimize` fits an advisory per-learner initial-difficulty prior from your own
+  accuracy; it never changes the audit verdict or the mastery gate.
 - **Retrieval practice from your own material.** Claims your own draft asserts become blanked
   cloze prompts you answer from memory, each carrying its source so you check yourself after,
   not before.
