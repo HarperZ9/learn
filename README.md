@@ -1,19 +1,16 @@
-<p align="center">
-  <img src="docs/brand/learn-hero.png" alt="learn, an accountable credential and coursework engine that generates practice and halts at every graded step">
-</p>
-<!-- Project mark: docs/brand/learn-mark.svg -->
+<p align="center"><img src=".github/assets/banner.svg" alt="learn: Your own material, a runnable course: spaced repetition, retrieval practice, real grading, zero dependencies." width="100%"></p>
 
-# learn
+**Your own material, a runnable course: spaced repetition, retrieval practice, real grading, zero dependencies.**
 
-> Study smarter, prove it honestly, and never let the machine take the test for you.
+[![npm](https://img.shields.io/npm/v/%40harperz9%2Flearn?style=flat-square&labelColor=14041b&color=ff35aa)](https://www.npmjs.com/package/@harperz9/learn)
+[![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/learn/actions/workflows/ci.yml)
+![node: >=20](https://img.shields.io/badge/node-%3E%3D20-blue?style=flat-square&labelColor=14041b)
+![deps: none](https://img.shields.io/badge/deps-none-success?style=flat-square&labelColor=14041b)
+![license: Fair Source](https://img.shields.io/badge/license-Fair%20Source-8f8095?style=flat-square&labelColor=14041b)
 
 [Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [learn](https://github.com/HarperZ9/learn) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
 
-[![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/learn/actions/workflows/ci.yml)
-![version: 1.6.0](https://img.shields.io/badge/version-1.6.0-informational.svg)
-![node: >=20](https://img.shields.io/badge/node-%3E%3D20-blue.svg)
-![deps: none](https://img.shields.io/badge/deps-none-success.svg)
-![license: fair-source](https://img.shields.io/badge/license-fair--source-blue.svg)
+`learn` turns whatever you are studying, a course, a certification, or your own notes, into a runnable learning loop: spaced repetition schedules your reviews, retrieval practice builds cloze prompts from your own drafts, misconception tracking spends your next session where you are actually weak, and a concept map gates readiness on prerequisites. One command, `learn tutor study`, composes all of it into a single plan from your recorded attempts, and the credential engine automates course logistics while halting at every graded step so the work is yours. Zero external dependencies, Node 20+. Every run writes a receipt you can re-check.
 
 ## Try it
 
