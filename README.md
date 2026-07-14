@@ -216,3 +216,11 @@ opening a PR, run the full suite.
 node --test
 node src/cli.mjs doctor
 ```
+
+## What this believes
+
+This tool is one lane of a family that holds a single belief steady across
+every surface: knowledge open to anyone who can attain the means; acceptance
+decided by external checks, never reputation; every result re-runnable;
+honest nulls first-class; ownership earned by comprehension; learning woven
+into the work. The full text lives in [CREDO.md](CREDO.md).
