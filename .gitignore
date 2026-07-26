@@ -6,3 +6,6 @@ node_modules/
 .superpowers/
 .env
 .env.*
+
+# Local-only Claude instructions (global standard: never commit)
+CLAUDE.local.md
