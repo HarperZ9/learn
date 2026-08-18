@@ -67,7 +67,7 @@ yours. Zero external dependencies, Node 20 or newer.
 ```bash
 git clone https://github.com/HarperZ9/learn.git
 cd learn
-node --test          # 284 tests, zero dependencies, nothing to build
+node --test          # 298 tests, zero dependencies, nothing to build
 ```
 
 Or install the published release: `npm install -g @harperz9/learn` (the repository can run ahead
@@ -166,7 +166,7 @@ never performs a real course action or answers a graded step.
 - **CLI surface:** `learn status`, `learn doctor`, `learn run/resume/verify/receipt`,
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt>`.
-- **Tests:** 284 across the runtime, adapters, receipt, tutor/learning-loop, and telos interop,
+- **Tests:** 298 across the runtime, adapters, receipt, tutor/learning-loop, and telos interop,
   including a falsifiable test per integrity invariant. `learn doctor` re-checks the invariants
   at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
