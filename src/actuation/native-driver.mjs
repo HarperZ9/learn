@@ -3,10 +3,29 @@
 // authenticated browser. The path to native-control is overridable via LEARN_NATIVE_CONTROL.
 import { pathToFileURL } from "node:url";
 
-const NC_ROOT = process.env.LEARN_NATIVE_CONTROL || "C:/dev/public/telos/demo/native-control";
+// native-control is not bundled: real runs drive the operator's own authenticated browser. Its
+// location comes from LEARN_NATIVE_CONTROL; there is no hardcoded default, so a public checkout
+// carries no local path and a fresh --native run fails with a clear instruction instead of a
+// cryptic module-not-found deep in an import.
+const NC_ROOT = process.env.LEARN_NATIVE_CONTROL;
 let _nc = null;
 async function nc() {
-  if (!_nc) _nc = await import(pathToFileURL(NC_ROOT + "/browser.mjs").href);
+  if (!NC_ROOT) {
+    throw new Error(
+      "--native needs the native-control module: set LEARN_NATIVE_CONTROL to its directory. " +
+      "Native runs drive your own authenticated browser and are not part of this package; " +
+      "the default (fake) driver needs nothing.",
+    );
+  }
+  if (!_nc) {
+    try {
+      _nc = await import(pathToFileURL(NC_ROOT + "/browser.mjs").href);
+    } catch (err) {
+      throw new Error(
+        `--native could not load native-control from LEARN_NATIVE_CONTROL=${NC_ROOT}: ${err.message}`,
+      );
+    }
+  }
   return _nc;
 }
 
