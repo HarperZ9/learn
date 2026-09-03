@@ -17,7 +17,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Run the full test suite (zero external dependencies)
+      # The shipped runtime still needs nothing but Node. This is here because the
+      # artwork gates in tools/ are Python, and tests/repo-art.test.mjs runs them.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run the full test suite (no installed dependencies)
         run: node --test
       - name: Doctor self-check (integrity invariants must report MATCH)
         run: node src/cli.mjs doctor

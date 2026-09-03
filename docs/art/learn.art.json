@@ -1,0 +1,61 @@
+{
+  "$comment": "Source of truth for the artwork on this repository's front page. Edit a sentence here and re-run tools/render_repo_art.py; tools/check_repo_art.py fails if the committed SVG stops matching.",
+  "header": {
+    "name": "learn",
+    "role": "study loop and credential logistics",
+    "tagline": "A runnable course, and graded work that never leaves your hands.",
+    "words": ["schedule", "practice", "witness", "gate", "resume"]
+  },
+  "flows": [
+    {
+      "file": "study-loop.svg",
+      "kicker": "one session, end to end",
+      "title": "How practice becomes a claim about what you actually know",
+      "alt": "Eight stages of a study session: objectives, due, misconceptions, order, practice, record, mastery gate, receipt. You answer the practice; the tutor holds the question and never supplies the answer. Each attempt is appended to a hash-chained log before any scheduling hint is derived from it, so the hint can never move the line. The mastery gate reads only those recorded attempts and reports ready when every objective has at least three attempts and at least eighty percent accuracy. Three outcomes: ready, not ready with the weak objectives named, and unverified when a receipt carries no chain to recompute.",
+      "footnote": "Practice is not the graded exam. The tutor checks your answers, and never supplies them.",
+      "stages": [
+        {"title": "Objectives", "note": "Your own topics, with prerequisites when you declare them."},
+        {"title": "Due", "note": "Overdue first, against a clock you pass in, never a hidden one."},
+        {"title": "Misconceptions", "note": "Your own wrong attempts, ranked per objective."},
+        {"title": "Order", "note": "Interleaved from a seed, so the same session replays the same way."},
+        {"title": "Practice", "note": "You answer. The tutor holds the question and never the answer."},
+        {"title": "Record", "note": "The attempt is chained first; the scheduling hint is derived after."},
+        {"title": "Mastery gate", "note": "Ready needs three attempts and eighty percent, on every objective."},
+        {"title": "Receipt", "note": "The practice, the verdict, and the line it will not cross."}
+      ],
+      "returns": [
+        {"from": 6, "to": 4, "label": "NOT READY NAMES THE WEAK OBJECTIVES AND ASKS FOR MORE"}
+      ],
+      "outcomes": [
+        {"label": "READY", "note": "every objective, three attempts, 80%", "tone": "verified"},
+        {"label": "NOT READY", "note": "the gate names which objectives are weak", "tone": "drift"},
+        {"label": "UNVERIFIED", "note": "a receipt with no chain never verifies", "tone": "none"}
+      ]
+    },
+    {
+      "file": "run-lane.svg",
+      "kicker": "one course, end to end",
+      "title": "How the logistics get automated without the graded work moving",
+      "alt": "Eight stages of a course run: workflow, gate, actuate, witness, ledger, halt, attest, receipt. Every step is checked against the engine's own list of known step kinds rather than the ones the workflow file declares, so an unknown kind is denied instead of trusted. An allowed step drives the page and is snapped before and after, and the pair is digested into one hash-chained row. A graded step always halts and hands the run back to you, in either submission mode. What you did then goes into the same chain as your own row. Three outcomes: completed, halted waiting on you, and denied.",
+      "footnote": "A resumed run restarts after the step that stopped it. It never answers that step.",
+      "stages": [
+        {"title": "Workflow", "note": "Steps declared in a file, sealed by a hash of the list."},
+        {"title": "Gate", "note": "Checked against the engine's own kinds, not the file's own."},
+        {"title": "Actuate", "note": "An allowed step drives the page, snapped before and after."},
+        {"title": "Witness", "note": "Before, action, and after are digested into one line."},
+        {"title": "Ledger", "note": "Each row hashes the row before it, from a genesis of zeros."},
+        {"title": "Halt", "note": "A graded step stops the run and hands it back to you."},
+        {"title": "Attest", "note": "What you did goes in as your own row, in your own words."},
+        {"title": "Receipt", "note": "Logistics and graded work counted apart, and re-checkable."}
+      ],
+      "returns": [
+        {"from": 6, "to": 4, "label": "YOUR ATTESTATION IS APPENDED AS ITS OWN ROW IN THE CHAIN"}
+      ],
+      "outcomes": [
+        {"label": "COMPLETED", "note": "every declared step ran or was handed back", "tone": "verified"},
+        {"label": "HALTED", "note": "a graded or sensitive step waits for you", "tone": "drift"},
+        {"label": "DENIED", "note": "a step kind the engine does not know", "tone": "none"}
+      ]
+    }
+  ]
+}
