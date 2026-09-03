@@ -57,5 +57,31 @@
         {"label": "DENIED", "note": "a step kind the engine does not know", "tone": "none"}
       ]
     }
+  ],
+  "cards": [
+    {
+      "file": "reverify-record.svg",
+      "kicker": "what re-verification hands back",
+      "title": "A receipt made to prove itself, field by field",
+      "source": "learn tutor reverify <session>",
+      "alt": "The record learn returns when it re-verifies one of its own receipts, drawn one field to a row, with what comes back in each and how a reader would check it. verdict has three readings and no fourth, and it keys off recomputed evidence rather than the receipt's own claim to be verified. failures carries a typed code: a broken hash chain names the entry it broke at, and a verdict mismatch carries the stored reading against the re-derived one. reasons is filled only when the receipt cannot be checked at all. summary.entries is the hash-chained practice log the verdict is re-derived from. summary.storedReady is the verdict as written, summary.rederivedReady is the verdict recomputed from the receipt's own attempts under its own recorded policy, and a disagreement between the two is the mismatch. witness.digest is the content address of the re-check itself.",
+      "footnote": "No digest and no count is drawn here, because both are true for one checkout and a picture that shows them is wrong by the next. What is drawn is the shape of each field, and the repository's own test holds these readings against records the re-verifier actually returns: a clean receipt, a tampered one, and one with no chain to check.",
+      "fields": [
+        {"key": "verdict", "value": "VERIFIED | FAILED | UNVERIFIED", "tone": "verified",
+         "note": "Three readings and no fourth. It keys off recomputed evidence, not the receipt's own verified flag."},
+        {"key": "failures[].code", "value": "CHAIN_BROKEN | VERDICT_MISMATCH", "tone": "none",
+         "note": "Typed, not prose. A broken chain names the entry it broke at; a mismatch carries stored against re-derived."},
+        {"key": "reasons", "value": "why it could not be checked", "tone": "none",
+         "note": "Filled only for UNVERIFIED. A receipt with no chained entries lands here instead of passing."},
+        {"key": "summary.entries", "value": "one row per witnessed attempt", "tone": "none",
+         "note": "The hash-chained practice log. Every row is recomputed from the row before it, from a genesis of zeros."},
+        {"key": "summary.storedReady", "value": "true | false", "tone": "none",
+         "note": "The mastery verdict as the receipt was written. Author-controlled, so it is compared and never trusted."},
+        {"key": "summary.rederivedReady", "value": "true | false", "tone": "none",
+         "note": "The same verdict recomputed from the receipt's own attempts under its own recorded threshold and minimum."},
+        {"key": "witness.digest", "value": "content address of the run", "tone": "none",
+         "note": "The re-check summary digested, so the outcome travels as evidence rather than as a sentence."}
+      ]
+    }
   ]
 }

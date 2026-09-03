@@ -1,12 +1,15 @@
 // The front-page artwork is rendered from docs/art/learn.art.json, so it can go stale the moment
 // somebody edits one and not the other. tools/check_repo_art.py re-renders each drawing and
-// compares the result against what is committed, runs twelve other gates, and emits a receipt.
+// compares the result against what is committed, runs fifteen other gates, and emits a receipt.
 // This asserts on that receipt inside node --test.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { reverifyReceipt, CHAIN_BROKEN, VERDICT_MISMATCH } from "../src/tutor/reverify.mjs";
+import { newSession, recordAttempt, masteryReceipt } from "../src/tutor/tutor.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -25,6 +28,9 @@ const GATES = [
   "art.every_illustration_is_shown",
   "art.tagline_stays_inside_its_rule",
   "art.outcome_fits_its_box",
+  "art.card_draws_shapes_not_digits",
+  "art.card_text_fits_its_column",
+  "art.card_carries_one_mark",
   "art.the_gate_can_fail",
 ];
 
@@ -64,7 +70,12 @@ test("the receipt accounts for both diagrams and the header, each with a digest"
   assert.deepEqual(receipt.specs, ["docs/art/learn.art.json"]);
   assert.deepEqual(
     receipt.outputs.map((o) => o.file),
-    ["docs/art/learn-header.svg", "docs/art/run-lane.svg", "docs/art/study-loop.svg"]
+    [
+      "docs/art/learn-header.svg",
+      "docs/art/reverify-record.svg",
+      "docs/art/run-lane.svg",
+      "docs/art/study-loop.svg",
+    ]
   );
   for (const output of receipt.outputs) {
     assert.match(output.sha256, /^[a-f0-9]{64}$/, output.file);
@@ -93,4 +104,65 @@ test("a gate that cannot fail is not a gate: the outcome-box check reports an ov
   const result = spawnSync("python", ["-c", probe], { cwd: ROOT, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(Number(result.stdout.trim()), 1, "the outcome-box gate cannot fail");
+});
+
+
+// docs/art/reverify-record.svg is a picture of what `tutor reverify` returns, and a
+// picture of a record is a claim about that record. The Python gates check that the
+// drawing fits its columns and draws shapes rather than one checkout's digits. Whether
+// the readings are TRUE is asked here, against records the re-verifier actually returns.
+function card() {
+  const spec = JSON.parse(readFileSync(path.join(ROOT, "docs/art/learn.art.json"), "utf8"));
+  const drawn = spec.cards.find((c) => c.file === "reverify-record.svg");
+  assert.ok(drawn, "the reverify card left the spec");
+  return new Map(drawn.fields.map((f) => [f.key, f.value]));
+}
+
+// One clean receipt and the three ways it stops being one.
+function samples() {
+  const session = newSession({ topic: "reverify-card", objectives: ["x"] });
+  for (const prompt of ["q1", "q2", "q3"]) {
+    recordAttempt(session, { objective: "x", prompt, answer: "a", correct: true });
+  }
+  const clean = JSON.parse(JSON.stringify(masteryReceipt(session)));
+  const tampered = JSON.parse(JSON.stringify(clean));
+  tampered.entries[1].entry.correct = false;
+  const edited = JSON.parse(JSON.stringify(clean));
+  edited.mastery.ready = !edited.mastery.ready;
+  const chainless = JSON.parse(JSON.stringify(clean));
+  delete chainless.entries;
+  return [clean, tampered, edited, chainless].map((r) => reverifyReceipt(r));
+}
+
+test("the card names every verdict the re-verifier returns, and no others", () => {
+  const drawn = card().get("verdict").split(" | ").sort();
+  const returned = [...new Set(samples().map((r) => r.verdict))].sort();
+  assert.deepEqual(drawn, returned);
+});
+
+test("the card names every failure code the re-verifier can type", () => {
+  const drawn = card().get("failures[].code").split(" | ").sort();
+  const returned = [...new Set(samples().flatMap((r) => r.failures.map((f) => f.code)))].sort();
+  assert.deepEqual(drawn, returned);
+  assert.deepEqual(returned, [CHAIN_BROKEN, VERDICT_MISMATCH].sort());
+});
+
+test("every field the card draws is a field one of those records carries", () => {
+  const records = samples();
+  for (const key of card().keys()) {
+    const reached = records.some((record) => {
+      let node = record;
+      for (const segment of key.split(".")) {
+        const name = segment.replace("[]", "");
+        if (node === null || typeof node !== "object" || !(name in node)) return false;
+        node = node[name];
+        if (segment.endsWith("[]")) {
+          if (!Array.isArray(node) || node.length === 0) return false;
+          node = node[0];
+        }
+      }
+      return true;
+    });
+    assert.ok(reached, `the card draws ${key}, and no re-verification record carries it`);
+  }
 });
