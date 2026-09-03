@@ -33,6 +33,13 @@ BIG_NUMBER = re.compile(r"\d{5,}")
 KEY_BUDGET = int((CARD.KEY_W + CARD.GUTTER - 16) / 7.8)
 VAL_BUDGET = int(CARD.VAL_W / 7.2)
 
+# The three column heads, in characters. They are set at 11px with a sixth of
+# an em of tracking, so they run wider per character than the columns under
+# them and get their own count.
+HEAD_BUDGETS = (int((CARD.KEY_W + CARD.GUTTER - 16) / 8.4),
+                int((CARD.VAL_W + CARD.GUTTER) / 8.4),
+                int(CARD.NOTE_W / 8.4))
+
 
 def _cards() -> list[dict]:
     return [card for path in sorted(ART.glob("*.art.json"))
@@ -58,8 +65,8 @@ def values_that_are_not_shapes(cards: list[dict]) -> list[str]:
 def text_that_overflows(cards: list[dict]) -> list[str]:
     """Nothing is drawn wider than the column it is drawn into. The key and
     the value are single unwrapped lines, so they run into their neighbour
-    rather than being clipped; the note and the footnote wrap and then drop
-    what will not fit instead of growing the drawing."""
+    rather than being clipped; the note and the footnote wrap by measured
+    width and then drop what will not fit instead of growing the drawing."""
     bad = []
     for card in cards:
         for field in card["fields"]:
@@ -73,6 +80,14 @@ def text_that_overflows(cards: list[dict]) -> list[str]:
             if drawn != " ".join(field["note"].split()):
                 bad.append(f'{card["file"]}: the note on {field["key"]} cuts '
                            f'off at "{drawn}"')
+        heads = card.get("heads", CARD.HEADS)
+        if len(heads) != 3:
+            bad.append(f'{card["file"]} names {len(heads)} columns, and the '
+                       f"drawing has three")
+        for head, budget in zip(heads, HEAD_BUDGETS):
+            if len(head) > budget:
+                bad.append(f'{card["file"]}: the {head!r} column head runs '
+                           f"into the column beside it")
         foot = " ".join(CARD._wrap(card["footnote"], CARD.FOOT_BUDGET,
                                    CARD.FOOT_LINES))
         if foot != " ".join(card["footnote"].split()):
@@ -108,9 +123,16 @@ def checks() -> list[tuple]:
 # in the value column, a name and a value too wide for their columns, a
 # clipped note, a clipped footnote, and two hot marks where the rule allows
 # one.
+#
+# The fourth row is the shape that got past an earlier version of this file. A
+# budget counted in characters read that note as two comfortable lines and let
+# it through, and it drew forty pixels past the edge of the page, because
+# capitals are wider than the lowercase prose the count was calibrated on. It
+# stays here so a return to counting characters fails rather than ships.
 CONTROL = [{
     "file": "control.svg",
     "footnote": "word " * 200,
+    "heads": ["z" * (HEAD_BUDGETS[0] + 1), "ok", "ok", "one column too many"],
     "fields": [
         {"key": "head", "value": "9f2c4ab71de0", "note": "ok",
          "tone": "verified"},
@@ -118,6 +140,7 @@ CONTROL = [{
          "tone": "drift"},
         {"key": "z" * (KEY_BUDGET + 1), "value": "z" * (VAL_BUDGET + 1),
          "note": "word " * 40},
+        {"key": "caps", "value": "ok", "note": " ".join(["UNVERIFIABLE"] * 10)},
     ],
 }]
 
@@ -127,9 +150,10 @@ def control_failures() -> list[str]:
     return [f"the gate missed {what}" for caught, what in (
         (len(values_that_are_not_shapes(CONTROL)) == 2,
          "a digest and a byte count drawn as values"),
-        (len(text_that_overflows(CONTROL)) == 4,
-         "an over-wide name, an over-wide value, a clipped note and a "
-         "clipped footnote"),
+        (len(text_that_overflows(CONTROL)) == 7,
+         "an over-wide name, an over-wide value, a clipped note, a row of "
+         "capitals that fits a character count and not the column, a fourth "
+         "column, an over-wide column head and a clipped footnote"),
         (len(wrong_number_of_marks(CONTROL)) == 1,
          "a card wearing two hot marks"),
     ) if not caught]
