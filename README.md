@@ -130,6 +130,14 @@ node src/cli.mjs tutor reverify mysession
 The misconception now steers the next `tutor study` plan, and the receipt re-verifies from its own
 recorded evidence rather than a stored boolean.
 
+Here is the record that last command hands back, drawn field by field:
+
+<p align="center"><img src="docs/art/reverify-record.svg" alt="The record learn returns when it re-verifies one of its own receipts, drawn one field to a row, with what comes back in each and how a reader would check it. verdict has three readings and no fourth, and it keys off recomputed evidence rather than the receipt's own claim to be verified. failures carries a typed code: a broken hash chain names the entry it broke at, and a verdict mismatch carries the stored reading against the re-derived one. reasons is filled only when the receipt cannot be checked at all. summary.entries is the hash-chained practice log the verdict is re-derived from. summary.storedReady is the verdict as written, summary.rederivedReady is the verdict recomputed from the receipt's own attempts under its own recorded policy, and a disagreement between the two is the mismatch. witness.digest is the content address of the re-check itself." width="100%"></p>
+
+The drawing is rendered from the same spec the artwork checker reads, and the test suite holds
+every reading in it against records the re-verifier actually returns, so it cannot go quietly out
+of date.
+
 The ordering in the middle of that diagram is what makes the rest of it true. An attempt is
 appended to the hash chain first, and the per-item scheduling state is derived from it after.
 The witnessed log is the record; the schedule is a hint layered on top of it. That is why the
