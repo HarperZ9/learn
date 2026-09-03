@@ -1,4 +1,4 @@
-<p align="center"><img src=".github/assets/zentropy-banner.png" alt="learn: Your own material, a runnable course: spaced repetition, retrieval practice, real grading, zero dependencies." width="100%"></p>
+<p align="center"><img src="docs/art/learn-header.svg" alt="learn: a runnable course, and graded work that never leaves your hands." width="100%"></p>
 
 **Your own material, a runnable course: spaced repetition, retrieval practice, real grading, zero dependencies.**
 
@@ -109,6 +109,8 @@ Leitner/interleave path.
 
 ## A worked session
 
+<p align="center"><img src="docs/art/study-loop.svg" alt="A study session in eight stages: objectives, due, misconceptions, order, practice, record, mastery gate, receipt. The gate reads only recorded attempts, and not-ready names the weak objectives and sends them back to practice." width="100%"></p>
+
 Record a wrong attempt with feedback, watch the plan shift, then emit and re-verify a receipt:
 
 ```bash
@@ -128,10 +130,17 @@ node src/cli.mjs tutor reverify mysession
 The misconception now steers the next `tutor study` plan, and the receipt re-verifies from its own
 recorded evidence rather than a stored boolean.
 
+The ordering in the middle of that diagram is what makes the rest of it true. An attempt is
+appended to the hash chain first, and the per-item scheduling state is derived from it after.
+The witnessed log is the record; the schedule is a hint layered on top of it. That is why the
+scheduler can reorder your session and still have no way to move the ready line.
+
 ## The credential engine
 
 The second engine turns a declarative workflow into a witnessed run: navigate a course, open a
 module, reach a graded step.
+
+<p align="center"><img src="docs/art/run-lane.svg" alt="A course run in eight stages: workflow, gate, actuate, witness, ledger, halt, attest, receipt. A graded step always halts, and your attestation is appended to the same hash chain as its own row." width="100%"></p>
 
 ```bash
 node src/cli.mjs run examples/course.json --id run1
@@ -146,6 +155,13 @@ did. Drivers: `FakeDriver` (offline, deterministic) and `NativeDriver` (real bro
 native-control). An adapter pack covers Coursera, Udemy, LinkedIn Learning, edX, Credly,
 Microsoft Learn, NonprofitReady, and generic self-paced courses, with no graded logic anywhere.
 See [docs/smoke.md](docs/smoke.md) for an operator-run live-LMS walkthrough.
+
+The gate in that diagram checks each step against the engine's own list of step kinds, not the
+list the workflow file declares. A workflow cannot widen what the engine is willing to do by
+naming a new kind of step: an unknown kind is denied, and the denial is the last row written.
+When you do authorize witnessed automated submission, the entry for that step carries a digest
+of the exact page state at the moment of submit, so the receipt records what was sent and not
+just that something was.
 
 ## MCP server
 

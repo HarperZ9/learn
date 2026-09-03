@@ -13,6 +13,10 @@ CLAUDE.local.md
 # Build output (global standard: never commit)
 dist/
 
+# Python (the renderers and gates under tools/)
+__pycache__/
+*.pyc
+
 # The committed template must survive the .env.* rule above (global standard)
 !.env.example
 
