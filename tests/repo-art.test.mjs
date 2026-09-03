@@ -1,6 +1,7 @@
 // The front-page artwork is rendered from docs/art/learn.art.json, so it can go stale the moment
-// somebody edits one and not the other. tools/check_repo_art.py re-renders and compares bytes,
-// plus eleven other gates, and emits a receipt. This asserts on that receipt inside node --test.
+// somebody edits one and not the other. tools/check_repo_art.py re-renders each drawing and
+// compares the result against what is committed, runs twelve other gates, and emits a receipt.
+// This asserts on that receipt inside node --test.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -24,6 +25,7 @@ const GATES = [
   "art.every_illustration_is_shown",
   "art.tagline_stays_inside_its_rule",
   "art.outcome_fits_its_box",
+  "art.the_gate_can_fail",
 ];
 
 function runGates() {
@@ -72,7 +74,9 @@ test("the receipt accounts for both diagrams and the header, each with a digest"
 });
 
 test("a gate that cannot fail is not a gate: the outcome-box check reports an over-wide note", () => {
-  // Point the check at a throwaway spec whose note is far too wide for its box.
+  // art.the_gate_can_fail covers the three geometry checks from inside the module. This
+  // covers the same ground from outside it, with a throwaway spec on disk whose note is
+  // far too wide for its box.
   const probe = [
     "import sys, json, tempfile, pathlib",
     "sys.path.insert(0, 'tools')",
