@@ -37,6 +37,13 @@ export const TOOLS = [
   { name: "learn_tutor_prooflesson", description: "Advisory, read-only: derive a lesson from a proof packet (source refs, claim, verdict, explanation scaffold, retrieval questions, verifier binding) plus a typed misconception record for DRIFT/UNVERIFIABLE packets. The lesson verdict always equals the packet verdict; a forged verdict enum is rejected; nothing is written.", inputSchema: { type: "object", properties: { packet: { type: "object" }, packetPath: { type: "string" } } } },
 ];
 
+export function readPackageVersion(packageJsonUrl = new URL("../package.json", import.meta.url)) {
+  const packageJson = JSON.parse(readFileSync(packageJsonUrl, "utf8"));
+  if (!packageJson || typeof packageJson.version !== "string" || !packageJson.version) {
+    throw new Error("package.json version is required");
+  }
+  return packageJson.version;
+}
 export async function dispatch(name, args = {}, { dir = process.cwd() } = {}) {
   switch (name) {
     case "learn_doctor": return await doctor();
@@ -111,7 +118,7 @@ export async function handle(msg, ctx = {}) {
   const reply = (result) => ({ jsonrpc: "2.0", id: msg.id, result });
   const fail = (code, message) => ({ jsonrpc: "2.0", id: msg.id, error: { code, message } });
   if (msg.method === "initialize") {
-    return reply({ protocolVersion: "2024-11-05", serverInfo: { name: "learn", version: "1.0.0" }, capabilities: { tools: {} } });
+    return reply({ protocolVersion: "2024-11-05", serverInfo: { name: "learn", version: readPackageVersion() }, capabilities: { tools: {} } });
   }
   if (msg.method === "notifications/initialized") return null;
   if (msg.method === "tools/list") return reply({ tools: TOOLS });
@@ -143,3 +150,4 @@ export function serve({ dir = process.cwd() } = {}) {
 }
 
 if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("src/mcp.mjs")) serve();
+
