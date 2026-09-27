@@ -260,8 +260,13 @@ learning aids via its `math_physics` lane. Point learn at them with `LEARN_CRUCI
 `["python", "-m", "crucible"]` with absolute paths for any file. Each child starts in a private
 empty folder with a short environment allowlist; name any other variable it needs in
 `LEARN_CHILD_ENV` (comma-separated). A bare command name is looked up on PATH without the folder
-you run learn from or any folder inside it, so a tool installed there, for example in a
-project's `node_modules/.bin`, needs its absolute path.
+you run learn from or any folder inside it, so a tool installed there needs its absolute path.
+That covers a project's `node_modules/.bin` and a virtual environment inside that folder: with
+the venv activated, `python` resolves to the next Python on PATH, so name the venv's interpreter
+by absolute path, for example `["/absolute/path/to/course/.venv/bin/python", "-m", "crucible"]`.
+When learn runs in a filesystem root, in your home folder or in a folder above it, it skips only
+an entry naming that folder itself. It never skips Node's own folder or the Windows, System32 and
+SysWOW64 folders, and when it runs in one of them it skips no entry.
 
 ## License
 

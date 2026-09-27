@@ -41,9 +41,13 @@ Affected: 1.6.0 and earlier.
   A command given as a bare name is looked up on PATH without any entry that reaches the folder
   learn runs in: an entry naming that folder or a folder below it, a junction or symlink to it,
   or a quoted spelling of it. The child's PATH leaves those entries out too, so a peer command
-  that runs a helper by bare name cannot start one planted there. On Windows a drive-relative
-  name such as `C:tool` is refused. For the same reason `LEARN_NATIVE_CONTROL` must be an absolute path: a relative value imported a
-  `browser.mjs` from the folder where `learn run --native` started.
+  that runs a helper by bare name does not find one planted there on PATH. When learn runs in a
+  filesystem root, in your home folder or in a folder above it, it skips only an entry naming
+  that folder itself. It never skips Node's own folder or the Windows, System32 and SysWOW64
+  folders, and when it runs in one of them it skips no entry. On Windows a drive-relative name
+  such as `C:tool` is refused. For the same reason `LEARN_NATIVE_CONTROL` must be an absolute
+  path: a relative value imported a `browser.mjs` from the folder where `learn run --native`
+  started.
 - The shipped `docs/smoke.md` no longer names a local development folder. The code default was
   already removed on `main` and ships here for the first time.
 
@@ -65,9 +69,13 @@ Affected: 1.6.0 and earlier.
   receipt relative to the state folder (`tutor/<id>.mastery.json`), not by its absolute path.
 - **Peer commands.** A `LEARN_*_CMD` child sees only allowlisted variables and starts in a private
   folder, and a relative path in the command is refused. A peer command installed inside the
-  folder learn runs in, for example in a project's `node_modules/.bin`, is no longer found by bare
-  name; give its absolute path. The interop functions `crucibleAssess`,
-  `gatherRun` and `telosRender` are async; they are not package exports.
+  folder learn runs in is no longer found by bare name, whether it sits in a project's
+  `node_modules/.bin` or in a virtual environment inside that folder. With such a venv activated,
+  `python` resolves to the next Python on PATH, so name the venv's interpreter by absolute path,
+  for example `["/absolute/path/to/course/.venv/bin/python", "-m", "crucible"]`. Each peer start
+  reads every PATH entry, so a slow or unreachable network folder on PATH delays every start. The
+  interop functions `crucibleAssess`, `gatherRun` and `telosRender` are async; they are not
+  package exports.
 
 ### Fixed
 
