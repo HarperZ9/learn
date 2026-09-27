@@ -57,22 +57,41 @@ yours. Zero external dependencies, Node 20 or newer.
   the recorded attempts (`VERDICT_MISMATCH` otherwise). A chainless receipt is `UNVERIFIED`,
   never verified.
 - **Credential-logistics engine.** `learn run` executes a declarative course workflow and halts
-  at every graded `assess` step, plus consent, CAPTCHA, payment, and account creation. Nothing
-  graded ever auto-completes, in either submission mode.
-- **Zero-dep MCP server.** `src/mcp.mjs` exposes fourteen advisory/read tools over stdio JSON-RPC
-  for agent use; actuation stays operator-driven on the CLI.
+  at every step tagged `assess`, at sensitive fills (credentials, payment details, CAPTCHA), at
+  `submit` steps unless you chose witnessed automated submission, and at steps flagged `cost` or
+  `irreversible` unless you pass `--allow-cost`. A step tagged `assess` never auto-completes, in
+  either submission mode. The engine recognizes a graded page only when the workflow tags it.
+- **Zero-dep MCP server.** `learn mcp` serves fifteen tools over stdio JSON-RPC for agent use:
+  thirteen read-only, and two (`learn_tutor_plan`, `learn_tutor_record`) that write session files
+  in your learn state folder. Actuation stays on the CLI.
 
 ## Install
 
 ```bash
-git clone https://github.com/HarperZ9/learn.git
-cd learn
-node --test          # 298 tests, zero dependencies, nothing to build
+npm install -g @harperz9/learn@2.0.0
+learn status
 ```
 
-Or install the published release: `npm install -g @harperz9/learn` (the repository can run ahead
-of the latest npm publish; the repo is the source of truth). Library use is available through the
-package exports `@harperz9/learn`, `@harperz9/learn/doctor`, and `@harperz9/learn/status`.
+Or run it without installing: `npx -y @harperz9/learn@2.0.0 status`. From a clone:
+
+```bash
+git clone https://github.com/HarperZ9/learn.git
+cd learn
+node --test          # zero dependencies, nothing to build
+```
+
+The package exports `@harperz9/learn` (the version), `@harperz9/learn/doctor`, and
+`@harperz9/learn/status`. The examples below use `node src/cli.mjs` from a clone; with the
+package installed, `learn` takes the same arguments.
+
+### Where learn keeps your data
+
+Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` when you set it,
+otherwise `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
+`$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints the folder under
+`state`. Pass `--dir <folder>` to keep a project's sessions next to the project instead. Session
+and run ids are letters, digits, dots, underscores and hyphens (up to 64, no leading dot), and no
+file is ever written outside the state folder. Delete a session by deleting its files there.
 
 ## Quickstart
 
@@ -157,9 +176,12 @@ node src/cli.mjs verify run1
 node src/cli.mjs receipt run1
 ```
 
-At every `assess` step (and at consent, CAPTCHA, payment, or account creation) it halts and waits
-for you. When you resume, your attestation is recorded alongside everything the engine actually
-did. Drivers: `FakeDriver` (offline, deterministic) and `NativeDriver` (real browser over
+At every `assess` step it halts and waits for you, and it halts the same way at sensitive fills,
+at `submit` steps and at steps flagged `cost` or `irreversible`. When you resume, your attestation
+is recorded with its time, alongside everything the engine actually did. A resume keeps the
+submission mode the run started with; `--submit witnessed-auto` on `run` or on a resume lets the
+engine click submit, and `--allow-cost` on the invocation that reaches a cost step lets it perform
+that step. Each grant is named in the ledger entry of the step it allowed. Drivers: `FakeDriver` (offline, deterministic) and `NativeDriver` (real browser over
 native-control). An adapter pack covers Coursera, Udemy, LinkedIn Learning, edX, Credly,
 Microsoft Learn, NonprofitReady, and generic self-paced courses, with no graded logic anywhere.
 See [docs/smoke.md](docs/smoke.md) for an operator-run live-LMS walkthrough.
@@ -174,24 +196,30 @@ just that something was.
 ## MCP server
 
 ```bash
-node src/mcp.mjs
+npx -y @harperz9/learn@2.0.0 mcp     # or `learn mcp`, or the `learn-mcp` bin
 ```
 
-Exposes the advisory/read tools over stdio JSON-RPC: `learn_doctor`, `learn_status`,
-`learn_verify`, `learn_receipt`, `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`,
+Serves fifteen tools over stdio JSON-RPC: `learn_doctor`, `learn_status`, `learn_verify`,
+`learn_receipt`, `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`,
 `learn_tutor_mastery`, `learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`,
-`learn_tutor_reverify`, `learn_tutor_prooflesson`, and `learn_visualize_dry_run`. The MCP surface
-never performs a real course action or answers a graded step.
+`learn_tutor_reverify`, `learn_tutor_derive_schedule`, `learn_tutor_prooflesson`, and
+`learn_visualize_dry_run`. `learn_tutor_plan` and `learn_tutor_record` write session files in the
+state folder, and `learn_tutor_plan` will not replace an existing session unless you pass
+`replace: true`. Every id and path argument stays inside the state folder; workflows and proof
+packets can also be passed inline. A failed call returns `isError: true` with a code
+(`INVALID_ARGUMENT`, `NOT_FOUND`, `CONFLICT`, `INTERNAL`) and a fixed message that never quotes a
+file. The MCP surface never performs a real course action or answers a graded step.
 
 ## Status
 
-- **Release:** `1.6.0`; command `learn`; Node >= 20; zero external dependencies (ES modules,
-  `node:test`).
-- **CLI surface:** `learn status`, `learn doctor`, `learn run/resume/verify/receipt`,
+- **Release:** `2.0.0`; commands `learn` and `learn-mcp`; Node >= 20; zero external dependencies
+  (ES modules, `node:test`).
+- **CLI surface:** `learn status`, `learn doctor`, `learn mcp`, `learn run/resume/verify/receipt`,
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
-  prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt>`.
-- **Tests:** 298 across the runtime, adapters, receipt, tutor/learning-loop, and telos interop,
-  including a falsifiable test per integrity invariant. `learn doctor` re-checks the invariants
+  prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
+  derive-schedule>`.
+- **Tests:** 365 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
+  points and security fixtures, including a falsifiable test per integrity invariant. `learn doctor` re-checks the invariants
   at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
 
@@ -224,7 +252,11 @@ bug report this tool can receive: every such path has a falsifiable test.
 Peer tools: [gather](https://github.com/HarperZ9/gather) (source receipts) and
 [crucible](https://github.com/HarperZ9/crucible) (measured claim evaluation) power the assist
 pillar; [telos](https://github.com/HarperZ9/telos) renders math/physics concepts as witnessed
-learning aids via its `math_physics` lane.
+learning aids via its `math_physics` lane. Point learn at them with `LEARN_CRUCIBLE_CMD`,
+`LEARN_GATHER_CMD` and `LEARN_TELOS_CMD`, each a JSON argv array such as
+`["python", "-m", "crucible"]` with absolute paths for any file. Each child starts in a private
+empty folder with a short environment allowlist; name any other variable it needs in
+`LEARN_CHILD_ENV` (comma-separated).
 
 ## License
 

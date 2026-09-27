@@ -3,7 +3,94 @@
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
-## Unreleased
+## 2.0.0
+
+A security release that also makes the package's own entry points work. It changes where learn
+keeps state and how `resume` authorizes steps; "Moving from 1.6.0" below lists what to do.
+
+### Security
+
+Affected: 1.6.0 and earlier.
+
+- **Path escape through `sessionId` and `runId`.** `learn_tutor_plan` joined `sessionId` into
+  `tutor/<id>.json` with no check, so `"../.claude/settings"` replaced a project's
+  `.claude/settings.json`. `learn_tutor_record`, `learn_verify` and `learn_receipt` read or
+  rewrote files the same way, and `learn_dry_run`, `learn_tutor_prooflesson` and
+  `learn_tutor_reverify` read any path, with a non-JSON file's first characters in the error.
+  Ids now match `[A-Za-z0-9._-]{1,64}`, must not start with a dot and must not be a Windows
+  device name. Every resolved path, after links and junctions, must stay inside the state folder.
+  Path arguments resolve inside it, and a failure carries a closed code and fixed text.
+- **Resume submitted and paid without the opt-in.** `learn resume` passed
+  `allowIrreversible: true` on every call. After a halt at `assess`, a plain resume clicked the
+  next `submit` step and a `cost` step, and the receipt filed the submit as a witnessed automated
+  submission. A resume now keeps the run's recorded mode, `--submit` takes only `manual` or
+  `witnessed-auto`, and steps flagged `cost` or `irreversible` halt unless `--allow-cost` is given
+  on the invocation that reaches them. The ledger entry of each step a grant allowed names it.
+- **Children of `LEARN_*_CMD` inherited the caller's folder and environment.** With the documented
+  `python -m crucible`, a `crucible/` package in the folder where `learn assist --crucible` ran was
+  executed. Children now start through the vendored safe spawn helper 1.0.0
+  (`src/_vendor/safe_spawn.mjs`, pinned in `VENDORED.sha256`): absolute executable, private empty
+  folder, environment allowlist extended only by `LEARN_CHILD_ENV`,
+  `NoDefaultCurrentDirectoryInExePath=1` on Windows, `-P` and `PYTHONSAFEPATH=1` for Python.
+- The shipped `docs/smoke.md` no longer names a local development folder. The code default was
+  already removed on `main` and ships here for the first time.
+
+### Breaking changes
+
+- **State location.** Sessions (`tutor/`) and runs (`runs/`) live in `LEARN_HOME` when it is set,
+  else in `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
+  `$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. 1.6.0 wrote them into the folder the
+  command started in. `learn status` prints the folder under `state`.
+- **Resume.** A plain `learn resume` no longer submits or pays. `run --submit witnessed-auto` no
+  longer covers `cost` steps. A completed or denied run cannot be resumed.
+- **MCP errors.** A tool failure is a result with `isError: true` and `structuredContent`
+  `{code, retryable, setup, detail}`, where code is `INVALID_ARGUMENT`, `NOT_FOUND`, `CONFLICT` or
+  `INTERNAL`. 1.6.0 returned JSON-RPC `-32000` errors with free text. An unknown tool is `-32602`.
+- **No silent overwrite.** `learn_tutor_plan` and `learn tutor plan` refuse to replace an existing
+  session unless `replace: true` or `--replace` is given.
+- **MCP paths.** `learn_dry_run` takes `workflow` inline or `workflowPath` inside the state
+  folder; `packetPath` and `file` resolve inside it too.
+- **Peer commands.** A `LEARN_*_CMD` child sees only allowlisted variables and starts in a private
+  folder, and a relative path in the command is refused. The interop functions `crucibleAssess`,
+  `gatherRun` and `telosRender` are async; they are not package exports.
+
+### Fixed
+
+- The `learn` bin works. `src/cli.mjs` starts with `#!/usr/bin/env node`, the repository checks
+  out LF everywhere (`.gitattributes`), and main-module detection compares real paths, so the bins
+  npm links run. In 1.6.0 the bin printed nothing on Windows and failed on Linux.
+- The human attestation records the real time of the resume. 1.6.0 recorded 1970-01-01.
+- MCP `serverInfo.version` reports the package version; 1.6.0 said 1.0.0. A test now holds
+  `package.json`, `package-lock.json`, `src/index.mjs`, `serverInfo`, status, doctor, this file
+  and the README to one version.
+
+### Added
+
+- `learn mcp` and a `learn-mcp` bin start the MCP server: `npx -y @harperz9/learn@2.0.0 mcp`.
+- `--dir <folder>` on the CLI for a project-local state folder, and `LEARN_HOME` for every entry
+  point. `LEARN_*_CMD` also takes a JSON argv array, which keeps a path with spaces whole.
+- A release workflow. On a `v*` tag it checks the tag against every version site, smokes the packed
+  tarball through `npx` on Windows, Linux and macOS, publishes with npm trusted publishing (npm
+  records provenance), and creates a GitHub Release with the tarball and `SHA256SUMS`. CI runs the
+  same tarball smoke on every push. Actions are pinned by commit SHA.
+- Also released from `main` for the first time: the repository art and its tests, and the
+  `src/interop.mjs` organ-bundle entries (not exported and not imported by the package).
+
+### Moving from 1.6.0
+
+- To keep sessions and runs in a project folder, pass `--dir <that folder>` or set `LEARN_HOME` to
+  it. To move them, copy the folder's `tutor/` and `runs/` into the folder `learn status` prints.
+- A run that should submit on resume: pass `--submit witnessed-auto` on `run` or on that resume. A
+  run that should pay: pass `--allow-cost` on the invocation that reaches the payment step.
+- MCP clients that read JSON-RPC error text read `structuredContent.code` instead.
+- `LEARN_TELOS_CMD="node ../telos/src/cli.mjs"` becomes
+  `LEARN_TELOS_CMD='["node", "/absolute/path/to/telos/src/cli.mjs"]'`. Name any variable a peer CLI
+  needs in `LEARN_CHILD_ENV`, for example `LEARN_CHILD_ENV=ANTHROPIC_API_KEY`.
+
+## 1.6.0
+
+The derive-schedule entry below shipped in the published 1.6.0 package. Earlier copies of this
+file listed it under Unreleased.
 
 - `tutor/fsrsderive.mjs`: make the FSRS schedule a **re-derivable function of the witnessed graded
   attempt log**. `deriveItemStates(attempts)` replays the recorded scored attempts (each carries its
@@ -23,8 +110,6 @@ behind the `feat/learning-loop` branch and reviewed before merge.
   `session.attempts`, and never feeds the mastery gate: `itemState` stays a hint, the witnessed log
   stays the truth. Backward compatible: all prior tests pass; 14 new tests across
   `learn-fsrs-derive.test.mjs` (10) and `learn-fsrs-derive-cli.test.mjs` (4).
-
-## 1.6.0
 
 - `tutor/fsrs.mjs` + `tutor/itemscheduler.mjs`: opt-in FSRS-class adaptive memory model.
   Per-item *difficulty* / *stability* / *retrievability* with a user-set retention target, so the

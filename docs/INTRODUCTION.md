@@ -40,7 +40,9 @@ did from what you did. A mastery claim from `learn` is never just the tool's wor
   `UNVERIFIED` for chainless receipts.
 - **Workflow.** For the credential engine: a declarative JSON list of steps (`navigate`, `click`,
   `fill`, `waitFor`, `capture`, `submit`, `assess`, `complete`). `learn run` executes it and
-  halts at every `assess` step, plus consent, CAPTCHA, payment, and account creation.
+  halts at every `assess` step, at sensitive fills (credentials, payment details, CAPTCHA), at
+  `submit` steps unless you authorized witnessed automated submission, and at steps flagged
+  `cost` or `irreversible` unless you pass `--allow-cost`.
 
 ## Your first ten minutes
 

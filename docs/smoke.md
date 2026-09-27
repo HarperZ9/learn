@@ -52,6 +52,7 @@ The receipt shows the split: automated-logistics steps vs. the graded step **you
 with the captured certificate. That is the credential-provenance record.
 
 ## What this never does
-No step answers a quiz/exam. `assess` steps always halt. Account creation, credentials,
-payment, and CAPTCHAs are the operator's (the engine pauses for them). Submitting a graded
-answer is not a capability of this tool.
+No step answers a quiz/exam. `assess` steps always halt. Sensitive fills (credentials, payment
+details, CAPTCHA) halt for you, and so do steps flagged `cost` unless you pass `--allow-cost`.
+Account creation is not a step kind: do it yourself before the run. Submitting a graded answer is
+not a capability of this tool.

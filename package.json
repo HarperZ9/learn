@@ -1,10 +1,13 @@
 {
   "name": "@harperz9/learn",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "type": "module",
   "description": "Accountable credential & coursework engine — automates course logistics, halts at every graded step for the human, and emits a tamper-evident receipt of how a credential was earned. Learning aid, not a bypass.",
   "license": "LicenseRef-fair-source",
   "author": "Zain Dana Harper (github.com/HarperZ9)",
+  "repository": { "type": "git", "url": "git+https://github.com/HarperZ9/learn.git" },
+  "homepage": "https://github.com/HarperZ9/learn#readme",
+  "bugs": { "url": "https://github.com/HarperZ9/learn/issues" },
   "keywords": ["accountability", "credential", "provenance", "learning", "automation", "zero-dependency", "telos"],
   "bin": { "learn": "src/cli.mjs", "learn-mcp": "src/mcp.mjs" },
   "exports": {

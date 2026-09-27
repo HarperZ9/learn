@@ -27,7 +27,7 @@ workflow (declarative steps)
       │
       ▼
 gate.decide(step)  ──►  deny (undeclared kind, nothing actuated)
-      │                 needs-human (assess, credentials, payment, CAPTCHA, submit-without-auth)
+      │                 needs-human (assess, sensitive fill, submit or cost step without a grant)
       ▼
 actuate (FakeDriver | NativeDriver)
       │
@@ -40,11 +40,11 @@ receipt (json + markdown + html: logistics vs. human assessment vs. aid visualiz
 
 - `workflow/schema.mjs`: the declarative step schema. `STEP_KINDS` is the engine's global
   allowlist; a step outside it is denied before it ever reaches a driver.
-- `accountability/gate.mjs`: `decide(step, {sealedKinds, allowIrreversible})`. `assess` always
-  returns `needs-human`, unconditionally. A `submit` (or anything cost/irreversible-flagged) only
-  proceeds automatically when the operator has explicitly authorized "witnessed-auto" for the run;
-  otherwise it halts too. `assess` is never gated by that flag; it is not a submission mode
-  concern, it always halts.
+- `accountability/gate.mjs`: `decide(step, {sealedKinds, autoSubmit, allowCost})`. `assess`
+  always returns `needs-human`, unconditionally. A `submit` proceeds automatically only under
+  "witnessed-auto" submission, and a step flagged `cost` or `irreversible` only with `allowCost`
+  (`--allow-cost` on that invocation); a submit that costs needs both. Otherwise it halts too.
+  `assess` is never gated by either grant; it always halts.
 - `runtime/runner.mjs`: `run`/`resume`. Walks workflow steps, asks the gate first, actuates only
   on `allow`, snapshots before/after every actuated step, and witnesses the digest into the
   ledger. A `deny` or `needs-human` decision stops the loop immediately; nothing after that point

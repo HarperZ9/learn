@@ -24,7 +24,12 @@ a falsifiable test proving it does not, and wire it into `doctor.mjs`.
   then run the full suite before committing.
 - Keep the CLI (`src/cli.mjs`) and MCP (`src/mcp.mjs`) surfaces aligned: a new read/advisory
   capability should be reachable from both where it makes sense. Actuation (real runs against a
-  live course) stays operator-driven on the CLI; the MCP server exposes advisory/read tools only.
+  live course) stays operator-driven on the CLI. The MCP server exposes read tools plus two that
+  write tutor sessions, and every id and path it takes stays inside the learn state folder
+  (`src/state.mjs`).
+- Start any child process through `src/interop/spawn.mjs`, which uses the vendored
+  `src/_vendor/safe_spawn.mjs`. Never edit the vendored file; `tests/vendored.test.mjs` checks it
+  against `VENDORED.sha256`.
 - Keep `README.md`, `CHANGELOG.md`, `status.mjs`, and `doctor.mjs` current when behavior changes.
 - No file over 300 lines; no function over 50 lines. Split/extract rather than grow a file past
   that.
