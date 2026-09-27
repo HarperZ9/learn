@@ -15,7 +15,7 @@
 // re-verification proves the verdict follows from the recorded evidence under the recorded
 // policy, not that the policy itself was a good one.
 import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { sessionPath } from "./tutorstore.mjs";
 import { Ledger } from "../accountability/ledger.mjs";
 import { observe } from "../accountability/witness.mjs";
 import { newSession, recordAttempt, mastery, masteryReceipt } from "./tutor.mjs";
@@ -123,14 +123,14 @@ export function reverifyReceipt(receipt) {
 export function reverifyFiles(dir, id, { file = null } = {}) {
   const candidates = file
     ? [file]
-    : [join(dir, "tutor", id + ".mastery.json"), join(dir, "tutor", id + ".study-receipt.json"), join(dir, "tutor", id + ".prooflesson.json")].filter((p) => existsSync(p));
+    : [sessionPath(dir, id, ".mastery.json"), sessionPath(dir, id, ".study-receipt.json"), sessionPath(dir, id, ".prooflesson.json")].filter((p) => existsSync(p));
   if (!candidates.length) {
     return { ok: false, results: [], error: `no tutor receipt found for ${id} (looked for tutor/${id}.mastery.json, tutor/${id}.study-receipt.json, and tutor/${id}.prooflesson.json; run \`learn tutor receipt\`, \`learn tutor study-receipt\`, or \`learn tutor prooflesson\` first)` };
   }
   const results = candidates.map((p) => {
     let receipt;
     try { receipt = JSON.parse(readFileSync(p, "utf8")); }
-    catch (e) { return { file: p, verdict: "UNVERIFIED", failures: [], reasons: ["unreadable or malformed receipt file: " + ((e && e.message) || e)], summary: null, witness: null }; }
+    catch (e) { return { file: p, verdict: "UNVERIFIED", failures: [], reasons: [`unreadable or malformed receipt file (${(e && (e.code || e.name)) || "error"})`], summary: null, witness: null }; }
     return { file: p, ...reverifyReceipt(receipt) };
   });
   return { ok: results.every((r) => r.verdict === "VERIFIED"), results };

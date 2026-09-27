@@ -1,12 +1,15 @@
 // Status envelope — capabilities + the integrity constraints the engine guarantees.
 import { version } from "./index.mjs";
 import { STEP_KINDS } from "./workflow/schema.mjs";
+import { stateRoot } from "./state.mjs";
 
 export function status() {
   return {
     tool: "learn",
     version,
     kind: "accountable credential & coursework engine",
+    // Where sessions and runs are kept: LEARN_HOME when set, else a per-user data folder.
+    state: stateRoot(),
     stepKinds: [...STEP_KINDS],
     drivers: ["fake", "native"],
     adapters: ["fake", "generic", "coursera", "udemy", "linkedin-learning", "edx", "credly", "microsoft-learn", "nonprofitready", "selfpaced"],
