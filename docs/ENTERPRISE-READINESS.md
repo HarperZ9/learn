@@ -1,8 +1,9 @@
 # Learn Enterprise Readiness
 
 `learn` is the enterprise learning-accountability edge: it automates course logistics, runs a real
-study loop against an operator's own practice, and halts hard at every step that is supposed to
-prove a human learned something, credentials, certifications, payment, and CAPTCHA included.
+study loop against an operator's own practice, and halts at every step tagged as graded, at
+sensitive fills (credentials, payment details, CAPTCHA), and at submit and cost steps the operator
+has not granted.
 
 This guide aligns the flagship with Project Telos context envelopes and action receipts. The goal
 is unattended agent work that can be left running and later inspected: what context the agent saw,
@@ -11,8 +12,9 @@ what exact material it relied on, what it changed, what verified, and what remai
 ## Enterprise Role
 
 - Automate course and certification logistics (navigate, click, fill non-sensitive fields, wait,
-  capture) while every `assess` step, and every credential, payment, CAPTCHA, or account-creation
-  step, halts unconditionally for the operator.
+  capture) while every `assess` step and every sensitive fill halts for the operator, and submit
+  and cost steps halt unless the operator grants them for that invocation (`--submit
+  witnessed-auto`, `--allow-cost`).
 - Run a teach-you learning loop (spaced repetition, retrieval practice, predict-then-observe,
   self-explanation, misconception tracking, prerequisite gating) over the operator's own recorded
   practice, and gate a `mastery` verdict on that practice alone.
@@ -31,7 +33,8 @@ what exact material it relied on, what it changed, what verified, and what remai
 - `node src/cli.mjs tutor plan|record|due|misconceptions|retrieval|explain|predict|score|path|
   study|study-receipt|mastery` for the learning loop, and `tutor reverify` to recompute an emitted
   receipt's evidence (typed `CHAIN_BROKEN` / `VERDICT_MISMATCH` failures; exit 0 only when clean).
-- `node src/mcp.mjs` for a stdio MCP host exposing the advisory/read surface only.
+- `learn mcp` (or `node src/mcp.mjs`) for a stdio MCP host: read tools, plus two that write
+  tutor sessions inside the learn state folder (`LEARN_HOME`, else a per-user data folder).
 
 ## Context Envelope Contribution
 

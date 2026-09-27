@@ -7,8 +7,9 @@ logistics automated, **you** do the graded steps, everything witnessed, receipt 
 ## Prerequisites
 1. Chrome running with the remote-debug port on the Telos automation profile (native-control's
    `ensureChrome`), and **you signed into the LMS** in that profile.
-2. `LEARN_NATIVE_CONTROL` pointing at the native-control dir if it isn't the default
-   (`C:/dev/public/telos/demo/native-control`).
+2. `LEARN_NATIVE_CONTROL` set to the absolute path of the native-control folder. There is no
+   default: without it, or with a relative path, a `--native` run stops at once with a setup
+   message and imports nothing.
 
 ## 1. Write a workflow for the course
 Tag every graded element `assess` — the engine will halt there for you. Example
@@ -52,6 +53,7 @@ The receipt shows the split: automated-logistics steps vs. the graded step **you
 with the captured certificate. That is the credential-provenance record.
 
 ## What this never does
-No step answers a quiz/exam. `assess` steps always halt. Account creation, credentials,
-payment, and CAPTCHAs are the operator's (the engine pauses for them). Submitting a graded
-answer is not a capability of this tool.
+No step answers a quiz/exam. `assess` steps always halt. Sensitive fills (credentials, payment
+details, CAPTCHA) halt for you, and so do steps flagged `cost` unless you pass `--allow-cost`.
+Account creation is not a step kind: do it yourself before the run. Submitting a graded answer is
+not a capability of this tool.

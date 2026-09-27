@@ -6,7 +6,14 @@ prove *you* know it.
 
 ## Install
 
-From a source checkout (zero external dependencies, nothing to build):
+From npm (zero external dependencies):
+
+```bash
+npm install -g @harperz9/learn@2.0.0
+learn status
+```
+
+Or without installing: `npx -y @harperz9/learn@2.0.0 status`. From a source checkout:
 
 ```bash
 git clone https://github.com/HarperZ9/learn.git
@@ -14,11 +21,9 @@ cd learn
 node --test          # confirm the suite passes on your machine
 ```
 
-Or install the published release from npm (`npm install -g @harperz9/learn`); the repository can
-run ahead of the latest npm publish, and the repo is the source of truth.
-
-Or add it into another project as a workspace dependency and call it via its exports
-(`@harperz9/learn`, `@harperz9/learn/doctor`, `@harperz9/learn/status`).
+The package exports are `@harperz9/learn`, `@harperz9/learn/doctor` and `@harperz9/learn/status`.
+The examples below use `node src/cli.mjs` from a checkout; an installed `learn` takes the same
+arguments.
 
 ## Run
 
@@ -27,6 +32,15 @@ node src/cli.mjs status
 node src/cli.mjs doctor
 node src/cli.mjs --help
 ```
+
+## Where your data goes
+
+Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` when set, otherwise
+`%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
+`$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints it under
+`state`. Add `--dir <folder>` to any command to use a project folder instead. Ids are letters,
+digits, dots, underscores and hyphens, up to 64 characters, with no leading dot or hyphen;
+nothing is written outside the state folder.
 
 ## Basic usage: the tutor / study loop
 
@@ -72,21 +86,26 @@ node src/cli.mjs verify run1
 node src/cli.mjs receipt run1
 ```
 
-Every `assess` step in `course.json` halts for you; nothing graded is ever auto-completed. See
-[docs/smoke.md](docs/smoke.md) for a full operator-run live-LMS walkthrough.
+Every `assess` step in `course.json` halts for you; nothing graded is ever auto-completed. The
+engine also halts at `submit` steps unless you pass `--submit witnessed-auto` (on `run`, which a
+later resume keeps, or on the resume itself), and at steps flagged `cost` or `irreversible` unless
+you pass `--allow-cost` on the invocation that reaches them. Each grant is named in the ledger entry
+of the step it allowed. See [docs/smoke.md](docs/smoke.md) for a full live-LMS walkthrough.
 
 ## MCP
 
 ```bash
-node src/mcp.mjs
+npx -y @harperz9/learn@2.0.0 mcp     # or `learn mcp`, `learn-mcp`, or `node src/mcp.mjs`
 ```
 
-Exposes the advisory/read tools (`learn_doctor`, `learn_status`, `learn_verify`, `learn_receipt`,
-`learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`, `learn_tutor_mastery`,
+Serves fifteen tools over stdio JSON-RPC (`learn_doctor`, `learn_status`, `learn_verify`,
+`learn_receipt`, `learn_dry_run`, `learn_tutor_plan`, `learn_tutor_record`, `learn_tutor_mastery`,
 `learn_tutor_due`, `learn_tutor_studyplan`, `learn_tutor_misconceptions`, `learn_tutor_reverify`,
-`learn_tutor_prooflesson`, `learn_visualize_dry_run`) over stdio JSON-RPC. Actuation (real workflow runs) stays
-operator-driven on the CLI; the MCP surface never performs a real course action or answers a
-graded step.
+`learn_tutor_derive_schedule`, `learn_tutor_prooflesson`, `learn_visualize_dry_run`). Two of them,
+`learn_tutor_plan` and `learn_tutor_record`, write session files in the state folder; every id and
+path argument stays inside that folder. A failed call returns `isError: true` with a code
+(`INVALID_ARGUMENT`, `NOT_FOUND`, `CONFLICT`, `INTERNAL`). Actuation (real workflow runs) stays on
+the CLI; the MCP surface never performs a real course action or answers a graded step.
 
 ## Verify
 

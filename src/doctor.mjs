@@ -40,7 +40,7 @@ export async function doctor() {
   add("ledger.tamper_detected", l.verify().ok === false);
 
   // 5. telos render is fail-closed with no engine configured (never throws, tagged aid)
-  const fc = telosRender("x.json", { cmd: "" });
+  const fc = await telosRender("x.json", { cmd: "" });
   add("telos.render_fail_closed", fc.ran === false && fc.verdict === "UNVERIFIABLE" && fc.provenance === "aid");
 
   // 6. an aid render is filed under aidVisualizations and NEVER as graded work

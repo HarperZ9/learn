@@ -7,13 +7,16 @@ export function buildReceipt({ workflow, ledger, completion }) {
   const automatedLogistics = steps.filter((e) => e.kind === "step").length;
   const humanAssessments = steps.filter((e) => e.kind === "human-assessment").map((e) => ({ seq: e.seq, note: e.note, at: e.at }));
   const witnessedAutoSubmissions = steps.filter((e) => e.kind === "step" && e.submission === "witnessed-auto")
-    .map((e) => ({ seq: e.seq, submittedStateDigest: e.submittedStateDigest }));
+    .map((e) => ({ seq: e.seq, submittedStateDigest: e.submittedStateDigest, authorizedBy: e.authorizedBy ?? null }));
+  // Steps flagged cost or irreversible that the engine performed, with the grant that allowed each.
+  const authorizedCostSteps = steps.filter((e) => e.kind === "step" && e.costAuthorizedBy)
+    .map((e) => ({ seq: e.seq, costAuthorizedBy: e.costAuthorizedBy }));
   const manualSubmissions = steps.filter((e) => e.kind === "human-gate" && e.stepKind === "submit").map((e) => ({ seq: e.seq }));
   const aidVisualizations = steps.filter((e) => e.kind === "aid-visualization")
     .map((e) => ({ seq: e.seq, concept: e.concept, selected_profile: e.selected_profile, result_hash: e.result_hash, verdict: e.verdict }));
   const verified = ledger.verify().ok;
   const certId = completion ? completion.certId : null;
-  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, witnessedAutoSubmissions, manualSubmissions, aidVisualizations, certId, steps };
+  const json = { course: workflow.course, seal: workflow.seal, verified, automatedLogistics, humanAssessments, witnessedAutoSubmissions, manualSubmissions, authorizedCostSteps, aidVisualizations, certId, steps };
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const html = `<!doctype html><meta charset="utf-8"><title>Credential receipt — ${esc(workflow.course)}</title>
 <style>body{font:15px/1.5 system-ui,sans-serif;max-width:44rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a}

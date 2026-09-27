@@ -26,8 +26,8 @@ test("toTelosSceneSpec defaults kind and tolerates a bare concept", () => {
 
 const FAKE = fileURLToPath(new URL("./fixtures/fake-telos.mjs", import.meta.url));
 
-test("telosRender fails closed when no command is configured", () => {
-  const r = telosRender("ignored.json", { cmd: "" });
+test("telosRender fails closed when no command is configured", async () => {
+  const r = await telosRender("ignored.json", { cmd: "" });
   assert.equal(r.ran, false);
   assert.equal(r.verdict, "UNVERIFIABLE");
   assert.equal(r.failure, "engine-unavailable");
@@ -35,8 +35,8 @@ test("telosRender fails closed when no command is configured", () => {
   assert.match(r.reason, /telos command/i);
 });
 
-test("telosRender parses the engine result and tags it aid", () => {
-  const r = telosRender("ignored.json", { cmd: "node " + FAKE });
+test("telosRender parses the engine result and tags it aid", async () => {
+  const r = await telosRender("ignored.json", { cmd: "node " + FAKE });
   assert.equal(r.ran, true);
   assert.equal(r.provenance, "aid");
   assert.equal(r.verdict, "MATCH");
@@ -45,16 +45,16 @@ test("telosRender parses the engine result and tags it aid", () => {
   assert.ok(Array.isArray(r.fallback_chain) && r.fallback_chain.length === 3);
 });
 
-test("telosRender returns UNVERIFIABLE (never throws) on non-JSON engine output", () => {
+test("telosRender returns UNVERIFIABLE (never throws) on non-JSON engine output", async () => {
   // `node -e "..."` prints non-JSON; telosRender must degrade, not crash.
-  const r = telosRender("ignored.json", { cmd: 'node -e process.stdout.write("not-json")' });
+  const r = await telosRender("ignored.json", { cmd: 'node -e process.stdout.write("not-json")' });
   assert.equal(r.provenance, "aid");
   assert.equal(r.verdict, "UNVERIFIABLE");
   assert.equal(r.failure, "bad-render-output");
 });
 
-test("toAidLedgerEntry produces an aid-visualization entry usable in a hash-chained ledger", () => {
-  const render = telosRender("ignored.json", { cmd: "node " + FAKE });
+test("toAidLedgerEntry produces an aid-visualization entry usable in a hash-chained ledger", async () => {
+  const render = await telosRender("ignored.json", { cmd: "node " + FAKE });
   const entry = toAidLedgerEntry(render, { concept: { title: "y = sin(x)" }, seq: 7 });
   assert.equal(entry.kind, "aid-visualization");
   assert.equal(entry.provenance, "aid");

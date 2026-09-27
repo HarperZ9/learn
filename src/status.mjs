@@ -1,12 +1,17 @@
 // Status envelope — capabilities + the integrity constraints the engine guarantees.
 import { version } from "./index.mjs";
 import { STEP_KINDS } from "./workflow/schema.mjs";
+import { stateRoot } from "./state.mjs";
 
-export function status() {
+// `state` is the folder this invocation uses: the caller passes { dir, source: "--dir" } when
+// --dir chose it, and the default is LEARN_HOME when set, else the per-user data folder.
+export function status({ state = stateRoot() } = {}) {
   return {
     tool: "learn",
     version,
     kind: "accountable credential & coursework engine",
+    // Where sessions and runs are kept.
+    state,
     stepKinds: [...STEP_KINDS],
     drivers: ["fake", "native"],
     adapters: ["fake", "generic", "coursera", "udemy", "linkedin-learning", "edx", "credly", "microsoft-learn", "nonprofitready", "selfpaced"],
@@ -16,7 +21,8 @@ export function status() {
       manual: "engine halts at each submit; the operator clicks submit",
       "witnessed-auto": "engine performs the submit via actuation with operator authorization, recording a witnessed before/after digest of exactly what was submitted",
     },
-    note: "submission mode affects `submit` only; `assess` (graded work) always halts regardless.",
+    costSteps: "steps flagged cost or irreversible halt unless --allow-cost is given on the run or resume that reaches them; the grant is never recorded as a default",
+    note: "submission mode affects `submit` only; a resume keeps the run's recorded mode unless --submit names one; `assess` (graded work) always halts regardless.",
     tutor: "teach-you loop: objectives -> practice (operator solves) -> self-check -> mastery-gate; witnessed practice log; never supplies real graded-assessment answers",
     learningLoop: {
       schedule: "spaced repetition (SM-2-lite/Leitner ladder) over the operator's own practice log; due() reports objectives due for review, most-overdue first. Opt-in FSRS-class path (fsrs.mjs + itemscheduler.mjs) tracks per-item difficulty/stability/retrievability and schedules against a retention target",
@@ -36,7 +42,7 @@ export function status() {
       "default-deny — only known step kinds run",
       "every step is witnessed and the ledger is hash-chained (tamper-evident)",
       "the receipt separates automated logistics from human assessment",
-      "credentials, payment, CAPTCHA, and account creation halt for the operator",
+      "sensitive fills (credentials, payment details, CAPTCHA) halt for the operator, and steps flagged cost or irreversible halt unless --allow-cost is given for that invocation",
       "aid visualizations are learning aids only — they are witnessed but never satisfy an assess step or enter the graded receipt channels",
       "tutor receipts re-verify from their own recorded evidence, never from author-controlled booleans (CHAIN_BROKEN / VERDICT_MISMATCH; chainless receipts are never verified)",
       "the FSRS schedule is a re-derivable function of the witnessed graded log: derive-schedule reconstructs it from the recorded scored attempts and flags a tampered cache as DRIFT; the scheduling hint never feeds the mastery gate",

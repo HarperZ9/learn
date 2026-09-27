@@ -46,7 +46,6 @@ async function runCredentialEngine() {
     driver,
     ledger: first.ledger,
     haltedAt: first.haltedAt,
-    allowIrreversible: true,
     humanAttest: { seq: first.haltedAt, note: "completed Quiz 1 myself", at: NOW },
   });
   console.log(`resumed -> status: ${done.status}`);

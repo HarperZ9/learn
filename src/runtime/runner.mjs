@@ -16,19 +16,24 @@ async function actuate(step, driver) {
   }
 }
 
-export async function run(workflow, { driver, allowIrreversible = false, submissionMode = "manual", fromSeq = 0, ledger = new Ledger(), humanAttest = null } = {}) {
+// Options that grant actuation (see gate.mjs): submissionMode "witnessed-auto" lets the engine
+// perform `submit` steps, allowCost lets it perform `cost` or `irreversible` steps, and
+// allowIrreversible is the library shorthand for both. authorizedBy and costAuthorizedBy name
+// the grant in the ledger entry of each step it allowed, so a receipt shows who authorized what.
+export async function run(workflow, { driver, allowIrreversible = false, allowCost = false, submissionMode = "manual",
+  authorizedBy = null, costAuthorizedBy = null, fromSeq = 0, ledger = new Ledger(), humanAttest = null } = {}) {
   // Default-deny against the engine's GLOBAL allowlist of known step kinds — NOT the workflow's
   // own kinds (which would be tautological). A step kind outside STEP_KINDS is refused.
   const sealedKinds = STEP_KINDS;
   // "witnessed-auto" authorizes the engine to perform `submit` steps (witnessed); "manual" halts them.
   // This NEVER affects `assess` (graded work), which always halts for the operator regardless.
-  const autoSubmit = allowIrreversible || submissionMode === "witnessed-auto";
+  const autoSubmit = submissionMode === "witnessed-auto";
   // If resuming straight after a human-gate, the caller attaches the human attestation for that seq.
   if (humanAttest) ledger.append({ kind: "human-assessment", seq: humanAttest.seq, note: humanAttest.note, at: humanAttest.at });
   let completion = null;
   for (let i = fromSeq; i < workflow.steps.length; i++) {
     const step = workflow.steps[i];
-    const g = decide(step, { sealedKinds, allowIrreversible: autoSubmit });
+    const g = decide(step, { sealedKinds, allowIrreversible, autoSubmit, allowCost });
     if (g.decision === "deny") {
       ledger.append({ kind: "decision", seq: i, decision: "deny", reason: g.reason, stepKind: step.kind });
       return { status: "denied", haltedAt: i, ledger, completion };
@@ -52,7 +57,9 @@ export async function run(workflow, { driver, allowIrreversible = false, submiss
         // state, so the receipt proves what was submitted and that the operator authorized it.
         entry.submission = "witnessed-auto";
         entry.submittedStateDigest = "sha256:" + sha256hex(JSON.stringify(before));
+        entry.authorizedBy = allowIrreversible ? "allowIrreversible" : (authorizedBy ?? "submissionMode witnessed-auto");
       }
+      if (step.cost || step.irreversible) entry.costAuthorizedBy = allowIrreversible ? "allowIrreversible" : (costAuthorizedBy ?? "allowCost");
       ledger.append(entry);
       if (step.kind === "complete") {
         completion = await getAdapter(workflow.adapter).captureCompletion(driver);
@@ -66,6 +73,8 @@ export async function run(workflow, { driver, allowIrreversible = false, submiss
   return { status: "completed", haltedAt: null, ledger, completion };
 }
 
-export async function resume(workflow, { driver, ledger, haltedAt, allowIrreversible = false, submissionMode = "manual", humanAttest = null } = {}) {
-  return run(workflow, { driver, ledger, allowIrreversible, submissionMode, fromSeq: haltedAt + 1, humanAttest });
+export async function resume(workflow, { driver, ledger, haltedAt, allowIrreversible = false, allowCost = false,
+  submissionMode = "manual", authorizedBy = null, costAuthorizedBy = null, humanAttest = null } = {}) {
+  return run(workflow, { driver, ledger, allowIrreversible, allowCost, submissionMode, authorizedBy, costAuthorizedBy,
+    fromSeq: haltedAt + 1, humanAttest });
 }
