@@ -3,13 +3,15 @@ import { version } from "./index.mjs";
 import { STEP_KINDS } from "./workflow/schema.mjs";
 import { stateRoot } from "./state.mjs";
 
-export function status() {
+// `state` is the folder this invocation uses: the caller passes { dir, source: "--dir" } when
+// --dir chose it, and the default is LEARN_HOME when set, else the per-user data folder.
+export function status({ state = stateRoot() } = {}) {
   return {
     tool: "learn",
     version,
     kind: "accountable credential & coursework engine",
-    // Where sessions and runs are kept: LEARN_HOME when set, else a per-user data folder.
-    state: stateRoot(),
+    // Where sessions and runs are kept.
+    state,
     stepKinds: [...STEP_KINDS],
     drivers: ["fake", "native"],
     adapters: ["fake", "generic", "coursera", "udemy", "linkedin-learning", "edx", "credly", "microsoft-learn", "nonprofitready", "selfpaced"],

@@ -63,11 +63,15 @@ function inlineOrFile(dir, value, pathValue, pathArg) {
   return readJson(confinedPath(dir, pathValue, pathArg), pathArg);
 }
 
-export async function dispatch(name, rawArgs = {}, { dir = stateRoot().dir } = {}) {
+// ctx.state is { dir, source } from serve(); a library caller may pass ctx.dir alone, which is
+// reported as a --dir choice. Without either, the state folder is LEARN_HOME or the default.
+export async function dispatch(name, rawArgs = {}, ctx = {}) {
+  const state = ctx.state ?? (ctx.dir ? { dir: ctx.dir, source: "--dir" } : stateRoot());
+  const dir = state.dir;
   const args = argsObject(rawArgs);
   switch (name) {
     case "learn_doctor": return await doctor();
-    case "learn_status": return status();
+    case "learn_status": return status({ state });
     case "learn_verify": { const r = loadRun(dir, args.runId); return { runId: args.runId, ...r.ledger.verify() }; }
     case "learn_receipt": { const r = loadRun(dir, args.runId); return buildReceipt({ workflow: r.workflow, ledger: r.ledger, completion: r.completion }).json; }
     case "learn_dry_run": {
@@ -175,8 +179,9 @@ export async function handle(msg, ctx = {}) {
   return fail(-32601, `method not found: ${msg.method}`);
 }
 
-// stdio loop: newline-delimited JSON-RPC.
-export function serve({ dir = stateRoot().dir } = {}) {
+// stdio loop: newline-delimited JSON-RPC. `dir` is the folder `learn mcp --dir` named.
+export function serve({ dir } = {}) {
+  const state = dir ? { dir, source: "--dir" } : stateRoot();
   let buf = "";
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", async (chunk) => {
@@ -186,7 +191,7 @@ export function serve({ dir = stateRoot().dir } = {}) {
       const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
       if (!line) continue;
       let msg; try { msg = JSON.parse(line); } catch { continue; }
-      const res = await handle(msg, { dir });
+      const res = await handle(msg, { state });
       if (res) process.stdout.write(JSON.stringify(res) + "\n");
     }
   });

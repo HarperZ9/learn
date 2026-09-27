@@ -74,7 +74,9 @@ Affected: 1.6.0 and earlier.
 
 - `learn mcp` and a `learn-mcp` bin start the MCP server: `npx -y @harperz9/learn@2.0.0 mcp`.
 - `--dir <folder>` on the CLI for a project-local state folder, and `LEARN_HOME` for every entry
-  point. `LEARN_*_CMD` also takes a JSON argv array, which keeps a path with spaces whole.
+  point. `learn status` and `learn_status` report the folder in use under `state`, with its
+  source: `--dir`, `LEARN_HOME` or `default`. `LEARN_*_CMD` also takes a JSON argv array, which
+  keeps a path with spaces whole.
 - A release workflow. On a `v*` tag it checks the tag against every version site, smokes the packed
   tarball through `npx` on Windows, Linux and macOS, publishes with npm trusted publishing (npm
   records provenance), and creates a GitHub Release with the tarball and `SHA256SUMS`. CI runs the

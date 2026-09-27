@@ -81,3 +81,22 @@ test("status reports the state folder and where it came from", async () => {
     if (saved === undefined) delete process.env.LEARN_HOME; else process.env.LEARN_HOME = saved;
   }
 });
+
+// Found while applying the review: with --dir, `learn status` and learn_status under
+// `learn mcp --dir` reported LEARN_HOME while every file went to the --dir folder.
+test("status names the folder --dir selected, for the CLI and for learn mcp --dir", () => {
+  const { proj, state, other } = folders();
+  const env = envWith({ LEARN_HOME: state });
+  const c = cli(other, env, ["status", "--dir", proj]);
+  assert.equal(c.status, 0, c.stderr);
+  assert.deepEqual(JSON.parse(c.stdout).state, { dir: proj, source: "--dir" });
+
+  const input = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "learn_status", arguments: {} } }) + "\n";
+  const m = spawnSync(process.execPath, [join(SRC, "cli.mjs"), "mcp", "--dir", proj], { cwd: other, env, input, encoding: "utf8", timeout: 30000 });
+  assert.equal(m.status, 0, m.stderr);
+  const reply = JSON.parse(m.stdout.split("\n")[0]);
+  assert.deepEqual(JSON.parse(reply.result.content[0].text).state, { dir: proj, source: "--dir" });
+
+  const plain = cli(other, env, ["status"]);
+  assert.deepEqual(JSON.parse(plain.stdout).state, { dir: state, source: "LEARN_HOME" }, "without --dir the report is unchanged");
+});

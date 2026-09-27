@@ -26,7 +26,8 @@ export async function main(argv, opts = {}) {
 async function command(argv, { dir: given } = {}) {
   const [cmd] = argv;
   const dirFlag = arg(argv, "--dir");
-  const dir = dirFlag ? resolve(dirFlag) : (given ?? stateRoot().dir);
+  const state = dirFlag ? { dir: resolve(dirFlag), source: "--dir" } : given ? { dir: given, source: "--dir" } : stateRoot();
+  const dir = state.dir;
   const engine = await runCommand(cmd, argv, dir);
   if (engine) return engine;
   if (cmd === "doctor") {
@@ -34,7 +35,7 @@ async function command(argv, { dir: given } = {}) {
     return { code: d.status === "MATCH" ? 0 : 1, out: `learn doctor: ${d.status}\n` + d.checks.map((c) => `  [${c.status}] ${c.name}`).join("\n") };
   }
   if (cmd === "status") {
-    return { code: 0, out: JSON.stringify(status(), null, 2) };
+    return { code: 0, out: JSON.stringify(status({ state }), null, 2) };
   }
   if (cmd === "tutor") {
     const { newSession, newSessionWithFSRS, recordAttempt, recordAttemptWithGrade, mastery, masteryReceipt } = await import("./tutor/tutor.mjs");
