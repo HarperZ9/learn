@@ -50,3 +50,14 @@ node src/cli.mjs doctor
 
 `doctor` must report `MATCH` before a commit lands. A `FAIL` on any integrity-invariant check
 blocks the change until fixed, not until suppressed.
+
+Before a release, check the package as a person gets it, and the release gate:
+
+```bash
+npm pack --pack-destination packed
+node scripts/smoke-tarball.mjs packed/harperz9-learn-<version>.tgz
+node scripts/check-release.mjs v<version> HarperZ9/learn
+```
+
+Releases go out only through `.github/workflows/release.yml` on a `v*` tag (npm trusted
+publishing). Never publish from a local machine.

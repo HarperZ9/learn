@@ -1,4 +1,4 @@
-// gather interop — turn assist-extracted sources into a gather manifest, and optionally run the
+// gather interop: turn assist-extracted sources into a gather manifest, and optionally run the
 // gather CLI to mint source receipts. Zero-dep (node builtins).
 import { parseCommand, runPeer, refusalReason } from "./spawn.mjs";
 
