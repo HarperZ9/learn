@@ -1,4 +1,4 @@
-// One version everywhere it is written (WP2). In 1.6.0 package.json and src/index.mjs said 1.6.0
+// One version everywhere it is written. In 1.6.0 package.json and src/index.mjs said 1.6.0
 // while the MCP serverInfo said 1.0.0, and nothing tied them together. This fails on any drift
 // between package.json, package-lock.json, src/index.mjs, serverInfo, status, doctor, the newest
 // CHANGELOG heading and the README's release line.

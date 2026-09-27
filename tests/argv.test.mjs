@@ -1,4 +1,4 @@
-// One parse of the command line (review F3). The 2.0.0 candidate found grants and switches with
+// One parse of the command line. The 2.0.0 candidate found grants and switches with
 // argv.includes, so a grant word given as the value of another flag (an attestation note, an id,
 // a topic) still counted. A flag that takes a value now consumes the next token, and a switch
 // counts only where a flag can stand. The behavior tests are in security-resume.test.mjs and

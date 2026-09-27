@@ -1,4 +1,4 @@
-// Child processes for LEARN_CRUCIBLE_CMD, LEARN_GATHER_CMD and LEARN_TELOS_CMD (WP1 e).
+// Child processes for LEARN_CRUCIBLE_CMD, LEARN_GATHER_CMD and LEARN_TELOS_CMD.
 // Released 1.6.0 split the variable on whitespace and ran the child in the caller's folder with
 // the full environment, so with the documented `python -m crucible` a crucible/ package planted
 // in a course folder ran on every `learn assist --crucible`. Children now start through the

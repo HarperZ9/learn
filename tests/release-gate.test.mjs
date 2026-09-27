@@ -1,4 +1,4 @@
-// The release gate and workflow (WP2). learn 1.6.0 was published by hand from a local machine,
+// The release gate and workflow. learn 1.6.0 was published by hand from a local machine,
 // with no tag, no GitHub Release, no SHA256SUMS and CI actions pinned by moving tags. The gate
 // script is what release.yml runs before anything is packed; the workflow checks below catch a
 // later edit that drops a gate, a pin or the trusted-publishing setup.

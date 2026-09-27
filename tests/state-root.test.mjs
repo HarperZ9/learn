@@ -1,4 +1,4 @@
-// Where learn keeps its state (WP1 a with STANDARD M8.3 and S4). Released 1.6.0 wrote tutor/ and
+// Where learn keeps its state. Released 1.6.0 wrote tutor/ and
 // runs/ into whatever folder the server or CLI started in, which for an MCP server is the user's
 // project. State now lives in LEARN_HOME when set, else a per-user data folder; the CLI takes
 // --dir for a project-local folder. Subprocess tests run the real entry points from a project

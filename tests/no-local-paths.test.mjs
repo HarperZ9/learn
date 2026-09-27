@@ -1,5 +1,5 @@
-// The published package must not carry a developer's local path (WP1 f). Released 1.6.0 fell
-// back to C:/dev/public/telos/demo/native-control when LEARN_NATIVE_CONTROL was unset, and its
+// The published package must not carry a developer's local path. Released 1.6.0 fell back to a
+// hard-coded path from the author's machine when LEARN_NATIVE_CONTROL was unset, and its
 // docs/smoke.md named the same folder. This walks every file package.json "files" ships.
 import { test } from "node:test";
 import assert from "node:assert/strict";

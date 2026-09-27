@@ -1,4 +1,4 @@
-// Path confinement for every id the MCP server and the CLI turn into a file name (WP1 a).
+// Path confinement for every id the MCP server and the CLI turn into a file name.
 // Released 1.6.0 joined `sessionId` and `runId` into a path with no check, so an advisory tool
 // call could overwrite a project's .claude/settings.json or read a file outside its folder.
 // Every fixture here is local: temporary folders, planted files and links made by the test.
@@ -142,7 +142,7 @@ test("CLI: tutor plan refuses to overwrite an existing session unless --replace 
   assert.equal(replaced.code, 0);
 });
 
-// Review F2. A link whose target did not exist yet passed the check: realpath failed on it, the
+// A link whose target did not exist yet passed the check: realpath failed on it, the
 // check fell back to the parent folder, and the write then followed the link and created the
 // target outside the state folder. A link that cannot be resolved is now refused.
 function danglingFileLink(t, link, target) {
@@ -186,7 +186,7 @@ test("a tutor/ folder link whose target does not exist is refused with INVALID_A
   assert.equal(existsSync(target), false);
 });
 
-// Review F3, case B. An id that starts with a hyphen looks like a flag (`--id --allow-cost`), so
+// An id that starts with a hyphen looks like a flag (`--id --allow-cost`), so
 // ids now start with a letter, a digit or an underscore.
 test("an id that starts with a hyphen is refused over MCP and on the CLI", async () => {
   const { root, proj } = project();
@@ -202,7 +202,7 @@ test("an id that starts with a hyphen is refused over MCP and on the CLI", async
   assert.equal(existsSync(join(proj, "runs")), false, "no run file was written");
 });
 
-// Review F3, the same class for switches. A switch word given as another flag's value is that
+// The same class for switches: a switch word given as another flag's value is that
 // flag's value: `--topic --replace` is a topic, and the existing session is kept.
 test("tutor plan --topic --replace keeps the existing session: the word is the topic, not the switch", async () => {
   const { proj } = project();

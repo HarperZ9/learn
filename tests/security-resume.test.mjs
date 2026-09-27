@@ -1,8 +1,8 @@
-// Resume authorization and attestation time (WP1 c and d). Released 1.6.0 passed
+// Resume authorization and attestation time. Released 1.6.0 passed
 // allowIrreversible: true on every `learn resume`, so after a halt at `assess` a plain resume
 // clicked the submit step and the cost step, and the receipt filed the submit under
 // witnessedAutoSubmissions, a mode the user never chose. The attestation time was epoch zero.
-// The fixture is the audit's resume-probe-workflow.json, copied unchanged; FakeDriver only.
+// The fixture is the workflow that showed this on 1.6.0, copied unchanged; FakeDriver only.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -146,7 +146,7 @@ test("gate: a cost step needs allowCost, and a submit that costs needs both gran
   assert.equal(decide({ kind: "assess" }, { ...opts, autoSubmit: true, allowCost: true }).decision, "needs-human");
 });
 
-// Review F3. Grants were found by scanning the whole argv, so a grant word that was really the
+// Grants were found by scanning the whole argv, so a grant word that was really the
 // value of --attest still granted. The argv is now parsed once and a flag's value is never read
 // back as a flag. The note text is kept as written.
 test("resume --attest '--allow-cost' records that text as the note and pays nothing: the cost step halts", async () => {

@@ -1,4 +1,4 @@
-// The package's own entry points (WP2). In 1.6.0 the `learn` bin had no #!/usr/bin/env node
+// The package's own entry points. In 1.6.0 the `learn` bin had no #!/usr/bin/env node
 // line and shipped with CRLF endings, so npm's Windows shim ran the .mjs file itself and printed
 // nothing, and Linux ran it as a shell script. Main-module detection compared strings, so a
 // linked bin was never treated as the program. There was no MCP bin and no `learn mcp`.

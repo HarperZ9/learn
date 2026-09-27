@@ -1,4 +1,4 @@
-// The vendored safe spawn helper must stay byte-identical to the canonical Q0 release
+// The vendored safe spawn helper must stay byte-identical to its canonical release
 // (safe_spawn.mjs 1.0.0). VENDORED.sha256 records the copy's hash in sha256sum format; this test
 // fails when the file drifts from the record, when the record drifts from the canonical hash, or
 // when a checkout rewrites its line endings (the .gitattributes rule keeps it byte-exact).
@@ -10,7 +10,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-// Canonical hash of safe_spawn.mjs 1.0.0, from the Q0 SHA256SUMS.
+// Canonical hash of safe_spawn.mjs 1.0.0, from the helper's own SHA256SUMS.
 const CANONICAL = "c1572ae596d63a34288a4e02de2c0d671384bd341cb5c8070b4c70664f8c4ff6";
 const REL = "src/_vendor/safe_spawn.mjs";
 

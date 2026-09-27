@@ -1,4 +1,4 @@
-// Path arguments over MCP (WP1 b). Released 1.6.0 read any file named by workflowPath,
+// Path arguments over MCP. Released 1.6.0 read any file named by workflowPath,
 // packetPath or file, and a JSON parse failure echoed the first characters of the file back to
 // the model ("FAKE_SECRE"...). Paths now resolve inside the state folder, workflows and packets
 // can be passed inline, and failures carry a fixed detail with no file bytes and no built path.
@@ -141,7 +141,7 @@ test("a failure the server did not anticipate is INTERNAL with a fixed detail", 
   assertNoLeak(res, join(state, "tutor", "s1.json"));
 });
 
-// Review F1. The containment check resolved a caller's path through realpath before refusing it,
+// The containment check resolved a caller's path through realpath before refusing it,
 // and on Windows resolving \host\share opens an SMB (or WebDAV) connection to that host and
 // offers the user's credentials. A path outside the state folder is now refused on its text, so
 // no filesystem call ever names it. The hosts here are loopback and the shares do not exist.
@@ -166,7 +166,7 @@ test("a path argument outside the state folder is refused before any filesystem 
   assert.ok(seen.length > 0, "the filesystem spy recorded nothing, so the check above proves nothing");
 });
 
-// Review F5. A successful reverify named each receipt by the absolute path the server built.
+// A successful reverify named each receipt by the absolute path the server built.
 // Files are now named relative to the state folder, the same form the caller passes in `file`.
 test("learn_tutor_reverify names each receipt by its place in the state folder, never by the absolute path", async () => {
   const { state } = layout();
