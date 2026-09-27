@@ -4,7 +4,8 @@
 // can be passed inline, and failures carry a fixed detail with no file bytes and no built path.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import fs, { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { handle } from "../src/mcp.mjs";
@@ -29,11 +30,36 @@ function failure(res) {
   return res.result.structuredContent;
 }
 
-// Nothing from the file and no path the server built may reach the model.
+// Nothing from the file and no path the server built may reach the model. The content text is
+// checked on its own as well: inside the whole reply it is escaped a second time, so a Windows
+// path with backslashes would not match there.
 function assertNoLeak(res, ...paths) {
-  const wire = JSON.stringify(res);
-  assert.ok(!wire.includes("FAKE_SECRE"), "file bytes leaked into the reply");
-  for (const p of paths) assert.ok(!wire.includes(JSON.stringify(p).slice(1, -1)), "a built path leaked into the reply");
+  const wires = [JSON.stringify(res), ...(res.result?.content ?? []).map((c) => c.text)];
+  for (const wire of wires) {
+    assert.ok(!wire.includes("FAKE_SECRE"), "file bytes leaked into the reply");
+    for (const p of paths) assert.ok(!wire.includes(JSON.stringify(p).slice(1, -1)), "a built path leaked into the reply");
+  }
+}
+
+// Every node:fs call whose path argument contains `marker`, while `fn` runs. The functions are
+// swapped on the fs object and pushed to the ESM bindings, then restored.
+const FS_PATH_CALLS = ["realpathSync", "lstatSync", "statSync", "existsSync", "readFileSync", "openSync", "readlinkSync", "accessSync", "readdirSync", "mkdirSync", "writeFileSync"];
+async function fsCallsNaming(marker, fn) {
+  const saved = {};
+  const seen = [];
+  const spy = (orig) => function (p, ...rest) {
+    if (String(p).includes(marker)) seen.push(String(p));
+    return orig.call(this, p, ...rest);
+  };
+  for (const n of FS_PATH_CALLS) { saved[n] = fs[n]; fs[n] = spy(saved[n]); }
+  fs.realpathSync.native = spy(saved.realpathSync.native);
+  syncBuiltinESMExports();
+  try {
+    return { result: await fn(), seen };
+  } finally {
+    for (const n of FS_PATH_CALLS) fs[n] = saved[n];
+    syncBuiltinESMExports();
+  }
 }
 
 const WORKFLOW = { adapter: "fake", course: "c", steps: [{ kind: "navigate", target: "x" }, { kind: "assess", label: "q" }] };
@@ -113,4 +139,29 @@ test("a failure the server did not anticipate is INTERNAL with a fixed detail", 
   const res = await call("learn_tutor_mastery", { sessionId: "s1" }, state);
   assert.equal(failure(res).code, "INTERNAL");
   assertNoLeak(res, join(state, "tutor", "s1.json"));
+});
+
+// Review F1. The containment check resolved a caller's path through realpath before refusing it,
+// and on Windows resolving \host\share opens an SMB (or WebDAV) connection to that host and
+// offers the user's credentials. A path outside the state folder is now refused on its text, so
+// no filesystem call ever names it. The hosts here are loopback and the shares do not exist.
+test("a path argument outside the state folder is refused before any filesystem call names it (no SMB or WebDAV touch)", async () => {
+  const { state } = layout();
+  const MARK = "learn-no-such-share";
+  const win = (...parts) => "\\\\" + parts.join("\\"); // \\a\b\c
+  const paths = process.platform === "win32"
+    ? [win("127.0.0.1", MARK, "x.json"), `//127.0.0.1/${MARK}/x.json`, win("127.0.0.1@8765", "DavWWWRoot", MARK + ".json"), win("?", "UNC", "127.0.0.1", MARK, "x.json")]
+    : [`//127.0.0.1/${MARK}/x.json`, `/${MARK}/x.json`];
+  for (const [tool, key] of [["learn_dry_run", "workflowPath"], ["learn_tutor_prooflesson", "packetPath"], ["learn_tutor_reverify", "file"]]) {
+    for (const p of paths) {
+      const args = { [key]: p, ...(tool === "learn_tutor_reverify" ? { sessionId: "s1" } : {}) };
+      const { result: res, seen } = await fsCallsNaming(MARK, () => call(tool, args, state));
+      assert.equal(failure(res).code, "INVALID_ARGUMENT", `${tool} ${p}`);
+      assert.deepEqual(seen, [], `${tool} reached the filesystem with ${p} before refusing it`);
+    }
+  }
+  // Control: the spy sees calls. A missing file inside the folder is looked up, then NOT_FOUND.
+  const { result: inside, seen } = await fsCallsNaming(MARK, () => call("learn_dry_run", { workflowPath: MARK + ".json" }, state));
+  assert.equal(failure(inside).code, "NOT_FOUND");
+  assert.ok(seen.length > 0, "the filesystem spy recorded nothing, so the check above proves nothing");
 });

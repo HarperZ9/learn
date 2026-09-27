@@ -53,9 +53,18 @@ function realish(p) {
   }
 }
 
-export function isInside(root, p) {
-  const rel = path.relative(realish(root), realish(p));
+// Containment on the text of two paths, without touching the filesystem.
+function under(root, p) {
+  const rel = path.relative(path.resolve(root), path.resolve(p));
   return rel === "" || (!path.isAbsolute(rel) && rel.split(path.sep)[0] !== "..");
+}
+
+// A path outside the state folder on its text (another drive, `..`, a UNC share such as
+// \\host\share) is refused before anything resolves it: on Windows, resolving a UNC path opens an
+// SMB or WebDAV connection to that host. Only a path already inside is resolved through links.
+export function isInside(root, p) {
+  if (!under(root, p)) return false;
+  return under(realish(root), realish(p));
 }
 
 // `<root>/<area>/<id><suffix>`, after the id and the resolved location are checked.
