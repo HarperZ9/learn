@@ -83,6 +83,8 @@ export async function runCommand(cmd, argv, dir) {
   if (cmd === "receipt") {
     const id = argv[1];
     const prev = loadRun(dir, id);
+    // Check all three files first, so a refused name leaves no partial receipt behind.
+    for (const suffix of [".receipt.json", ".receipt.md", ".receipt.html"]) runPath(dir, id, suffix);
     const { json, markdown, html } = buildReceipt({ workflow: prev.workflow, ledger: prev.ledger, completion: prev.completion });
     writeRunFile(dir, id, ".receipt.json", JSON.stringify(json, null, 2));
     writeRunFile(dir, id, ".receipt.md", markdown);

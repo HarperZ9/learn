@@ -3,11 +3,13 @@
 // The state folder is LEARN_HOME when set, else a per-user data folder: %LOCALAPPDATA%\learn on
 // Windows, ~/Library/Application Support/learn on macOS, $XDG_DATA_HOME/learn or
 // ~/.local/share/learn elsewhere. Ids that name a file (sessionId, runId) must match ID_PATTERN,
-// must not start with a dot and must not be a Windows device name. Every path is resolved through
-// real paths (so `..`, symlinks and junctions are followed) and refused when it lands outside.
+// must not start with a dot and must not be a Windows device name. A path outside the folder on
+// its text is refused before anything resolves it. A path inside is resolved through real paths
+// (so symlinks and junctions are followed) and refused when it lands outside, or when a link on
+// the way does not resolve.
 import { homedir } from "node:os";
 import path from "node:path";
-import { readFileSync, realpathSync } from "node:fs";
+import { lstatSync, readFileSync, realpathSync } from "node:fs";
 import { invalid, notFound, LearnError } from "./errors.mjs";
 
 export const ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
@@ -35,8 +37,21 @@ export function checkId(value, name) {
   return value;
 }
 
+// Whether a directory entry exists at `p` itself, without following a link there.
+function entryExists(p) {
+  try {
+    lstatSync(p);
+    return true;
+  } catch (err) {
+    if (err.code === "ENOENT" || err.code === "ENOTDIR") return false;
+    throw err;
+  }
+}
+
 // The real path of `p`: the nearest existing ancestor is resolved through links, and the
-// segments that do not exist yet are appended unchanged.
+// segments that do not exist yet are appended unchanged. An entry that exists but does not
+// resolve is a link whose target is missing; a write would follow it wherever it points, so the
+// result is null and the caller treats the path as outside.
 function realish(p) {
   let cur = path.resolve(p);
   const rest = [];
@@ -45,6 +60,7 @@ function realish(p) {
       return path.join(realpathSync.native(cur), ...rest.reverse());
     } catch (err) {
       if (err.code !== "ENOENT" && err.code !== "ENOTDIR") throw err;
+      if (entryExists(cur)) return null;
       const parent = path.dirname(cur);
       if (parent === cur) return path.resolve(p);
       rest.push(path.basename(cur));
@@ -64,7 +80,9 @@ function under(root, p) {
 // SMB or WebDAV connection to that host. Only a path already inside is resolved through links.
 export function isInside(root, p) {
   if (!under(root, p)) return false;
-  return under(realish(root), realish(p));
+  const base = realish(root);
+  const real = realish(p);
+  return base !== null && real !== null && under(base, real);
 }
 
 // `<root>/<area>/<id><suffix>`, after the id and the resolved location are checked.

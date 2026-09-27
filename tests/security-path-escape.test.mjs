@@ -141,3 +141,47 @@ test("CLI: tutor plan refuses to overwrite an existing session unless --replace 
   const replaced = await main(["tutor", "plan", "s1", "--objectives", "b", "--replace"], { dir: proj });
   assert.equal(replaced.code, 0);
 });
+
+// Review F2. A link whose target did not exist yet passed the check: realpath failed on it, the
+// check fell back to the parent folder, and the write then followed the link and created the
+// target outside the state folder. A link that cannot be resolved is now refused.
+function danglingFileLink(t, link, target) {
+  try { symlinkSync(target, link, "file"); return true; }
+  catch (e) { if (e.code === "EPERM") { t.skip("file symlinks need extra privilege on this Windows host"); return false; } throw e; }
+}
+
+test("a dangling file link in the state folder is refused on every write path, and nothing is created outside", async (t) => {
+  const { root, proj } = project();
+  const outside = join(root, "outside");
+  mkdirSync(outside);
+  mkdirSync(join(proj, "tutor"));
+  if (!danglingFileLink(t, join(proj, "tutor", "s1.json"), join(outside, "plan.json"))) return;
+  const plan = await call("learn_tutor_plan", { sessionId: "s1", topic: "planted", objectives: ["x"] }, proj);
+  assert.equal(failure(plan).code, "INVALID_ARGUMENT", "MCP learn_tutor_plan");
+
+  await main(["tutor", "plan", "s2", "--objectives", "a"], { dir: proj });
+  danglingFileLink(t, join(proj, "tutor", "s2.mastery.json"), join(outside, "mastery.json"));
+  const tr = await main(["tutor", "receipt", "s2"], { dir: proj });
+  assert.equal(tr.code, 1, "CLI tutor receipt");
+  assert.match(tr.out, /outside the learn state folder/);
+
+  const wf = join(root, "wf.json");
+  writeFileSync(wf, JSON.stringify({ adapter: "fake", course: "c", steps: [{ kind: "navigate", target: "x" }, { kind: "complete" }] }));
+  assert.equal((await main(["run", wf, "--id", "r1"], { dir: proj })).code, 0);
+  danglingFileLink(t, join(proj, "runs", "r1.receipt.html"), join(outside, "receipt.html"));
+  const rr = await main(["receipt", "r1"], { dir: proj });
+  assert.equal(rr.code, 1, "CLI receipt");
+  assert.equal(existsSync(join(proj, "runs", "r1.receipt.json")), false, "the receipt is refused whole, before any of its files is written");
+
+  assert.deepEqual(readdirSync(outside), [], "nothing was created outside the state folder");
+});
+
+test("a tutor/ folder link whose target does not exist is refused with INVALID_ARGUMENT, and the target is never created", async () => {
+  const { root, proj } = project();
+  mkdirSync(join(root, "outside"));
+  const target = join(root, "outside", "newdir");
+  symlinkSync(target, join(proj, "tutor"), process.platform === "win32" ? "junction" : "dir");
+  const res = await call("learn_tutor_plan", { sessionId: "s1", objectives: ["x"] }, proj);
+  assert.equal(failure(res).code, "INVALID_ARGUMENT");
+  assert.equal(existsSync(target), false);
+});
