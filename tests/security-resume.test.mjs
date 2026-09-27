@@ -145,3 +145,26 @@ test("gate: a cost step needs allowCost, and a submit that costs needs both gran
   assert.equal(decide({ kind: "submit", cost: true }, { ...opts, autoSubmit: true, allowCost: true }).decision, "allow");
   assert.equal(decide({ kind: "assess" }, { ...opts, autoSubmit: true, allowCost: true }).decision, "needs-human");
 });
+
+// Review F3. Grants were found by scanning the whole argv, so a grant word that was really the
+// value of --attest still granted. The argv is now parsed once and a flag's value is never read
+// back as a flag. The note text is kept as written.
+test("resume --attest '--allow-cost' records that text as the note and pays nothing: the cost step halts", async () => {
+  const dir = tmp();
+  await main(["run", FIXTURE, "--id", "g1", "--submit", "witnessed-auto"], { dir });
+  await main(["resume", "g1", "--attest", "--allow-cost"], { dir });
+  assert.equal(saved(dir, "g1").status, "halted-needs-human");
+  assert.equal(saved(dir, "g1").haltedAt, 3, "halts at the cost step");
+  assert.equal(clicked(dir, "g1", "#pay"), false);
+  assert.equal(rows(dir, "g1").find((e) => e.kind === "human-assessment").note, "--allow-cost");
+});
+
+test("resume --attest '--submit' witnessed-auto grants no submit: the run halts at the submit step", async () => {
+  const dir = tmp();
+  await main(["run", FIXTURE, "--id", "g2"], { dir });
+  await main(["resume", "g2", "--attest", "--submit", "witnessed-auto"], { dir });
+  assert.equal(saved(dir, "g2").status, "halted-needs-human");
+  assert.equal(saved(dir, "g2").haltedAt, 2, "halts at the submit step");
+  assert.equal(clicked(dir, "g2", "#final-submit"), false);
+  assert.equal(clicked(dir, "g2", "#pay"), false);
+});

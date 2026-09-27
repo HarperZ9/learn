@@ -39,8 +39,8 @@ Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` wh
 `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
 `$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints it under
 `state`. Add `--dir <folder>` to any command to use a project folder instead. Ids are letters,
-digits, dots, underscores and hyphens, up to 64 characters, with no leading dot; nothing is
-written outside the state folder.
+digits, dots, underscores and hyphens, up to 64 characters, with no leading dot or hyphen;
+nothing is written outside the state folder.
 
 ## Basic usage: the tutor / study loop
 

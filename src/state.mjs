@@ -3,10 +3,10 @@
 // The state folder is LEARN_HOME when set, else a per-user data folder: %LOCALAPPDATA%\learn on
 // Windows, ~/Library/Application Support/learn on macOS, $XDG_DATA_HOME/learn or
 // ~/.local/share/learn elsewhere. Ids that name a file (sessionId, runId) must match ID_PATTERN,
-// must not start with a dot and must not be a Windows device name. A path outside the folder on
-// its text is refused before anything resolves it. A path inside is resolved through real paths
-// (so symlinks and junctions are followed) and refused when it lands outside, or when a link on
-// the way does not resolve.
+// must not start with a dot or a hyphen (so an id never reads as a flag) and must not be a
+// Windows device name. A path outside the folder on its text is refused before anything resolves
+// it. A path inside is resolved through real paths (so symlinks and junctions are followed) and
+// refused when it lands outside, or when a link on the way does not resolve.
 import { homedir } from "node:os";
 import path from "node:path";
 import { lstatSync, readFileSync, realpathSync } from "node:fs";
@@ -29,10 +29,10 @@ export function stateRoot({ env = process.env, platform = process.platform, home
 }
 
 export function checkId(value, name) {
-  const ok = typeof value === "string" && ID_PATTERN.test(value) && !value.startsWith(".") &&
+  const ok = typeof value === "string" && ID_PATTERN.test(value) && !value.startsWith(".") && !value.startsWith("-") &&
     !DEVICE_NAME.test(value.split(".")[0]);
   if (!ok) {
-    throw invalid(`${name} must be 1 to 64 letters, digits, dots, underscores or hyphens, must not start with a dot, and must not be a device name`);
+    throw invalid(`${name} must be 1 to 64 letters, digits, dots, underscores or hyphens, must not start with a dot or a hyphen, and must not be a device name`);
   }
   return value;
 }

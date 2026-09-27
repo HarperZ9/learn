@@ -185,3 +185,31 @@ test("a tutor/ folder link whose target does not exist is refused with INVALID_A
   assert.equal(failure(res).code, "INVALID_ARGUMENT");
   assert.equal(existsSync(target), false);
 });
+
+// Review F3, case B. An id that starts with a hyphen looks like a flag (`--id --allow-cost`), so
+// ids now start with a letter, a digit or an underscore.
+test("an id that starts with a hyphen is refused over MCP and on the CLI", async () => {
+  const { root, proj } = project();
+  for (const bad of ["-x", "--allow-cost"]) {
+    const res = await call("learn_tutor_plan", { sessionId: bad, objectives: ["x"] }, proj);
+    assert.equal(failure(res).code, "INVALID_ARGUMENT", bad);
+  }
+  const wf = join(root, "wf.json");
+  writeFileSync(wf, JSON.stringify({ adapter: "fake", course: "c", steps: [{ kind: "assess", label: "q" }] }));
+  const r = await main(["run", wf, "--id", "--allow-cost"], { dir: proj });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /must not start with a dot or a hyphen/);
+  assert.equal(existsSync(join(proj, "runs")), false, "no run file was written");
+});
+
+// Review F3, the same class for switches. A switch word given as another flag's value is that
+// flag's value: `--topic --replace` is a topic, and the existing session is kept.
+test("tutor plan --topic --replace keeps the existing session: the word is the topic, not the switch", async () => {
+  const { proj } = project();
+  await main(["tutor", "plan", "s1", "--objectives", "a"], { dir: proj });
+  await main(["tutor", "record", "s1", "--objective", "a", "--correct", "true"], { dir: proj });
+  const r = await main(["tutor", "plan", "s1", "--topic", "--replace", "--objectives", "b"], { dir: proj });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /already exists/);
+  assert.equal(JSON.parse(readFileSync(join(proj, "tutor", "s1.json"), "utf8")).attempts.length, 1, "the practice log survives");
+});

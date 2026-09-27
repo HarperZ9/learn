@@ -90,7 +90,7 @@ Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` wh
 otherwise `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
 `$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints the folder under
 `state`. Pass `--dir <folder>` to keep a project's sessions next to the project instead. Session
-and run ids are letters, digits, dots, underscores and hyphens (up to 64, no leading dot), and no
+and run ids are letters, digits, dots, underscores and hyphens (up to 64, no leading dot or hyphen), and no
 file is ever written outside the state folder. Delete a session by deleting its files there.
 
 ## Quickstart

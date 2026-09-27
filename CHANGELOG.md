@@ -17,9 +17,9 @@ Affected: 1.6.0 and earlier.
   `.claude/settings.json`. `learn_tutor_record`, `learn_verify` and `learn_receipt` read or
   rewrote files the same way, and `learn_dry_run`, `learn_tutor_prooflesson` and
   `learn_tutor_reverify` read any path, with a non-JSON file's first characters in the error.
-  Ids now match `[A-Za-z0-9._-]{1,64}`, must not start with a dot and must not be a Windows
-  device name. Every resolved path, after links and junctions, must stay inside the state folder.
-  Path arguments resolve inside it, and a failure carries a closed code and fixed text.
+  Ids now match `[A-Za-z0-9._-]{1,64}`, must not start with a dot or a hyphen and must not be a
+  Windows device name. Every resolved path, after links and junctions, must stay inside the state
+  folder. Path arguments resolve inside it, and a failure carries a closed code and fixed text.
 - **Resume submitted and paid without the opt-in.** `learn resume` passed
   `allowIrreversible: true` on every call. After a halt at `assess`, a plain resume clicked the
   next `submit` step and a `cost` step, and the receipt filed the submit as a witnessed automated
@@ -27,6 +27,8 @@ Affected: 1.6.0 and earlier.
   `witnessed-auto`, and steps flagged `cost` or `irreversible` halt unless `--allow-cost` is given
   on the invocation that reaches them. The ledger entry of each step a grant allowed names it,
   and the receipt lists it (`witnessedAutoSubmissions[].authorizedBy`, `authorizedCostSteps`).
+  The command line is read once, so a grant word given as the value of another flag, as in
+  `--attest "--allow-cost"`, is that flag's value and grants nothing.
 - **Children of `LEARN_*_CMD` inherited the caller's folder and environment.** With the documented
   `python -m crucible`, a `crucible/` package in the folder where `learn assist --crucible` ran was
   executed. Children now start through the vendored safe spawn helper 1.0.0

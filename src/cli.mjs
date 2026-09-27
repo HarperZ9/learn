@@ -6,7 +6,8 @@ import { doctor } from "./doctor.mjs";
 import { status } from "./status.mjs";
 import { stateRoot } from "./state.mjs";
 import { LearnError } from "./errors.mjs";
-import { arg, runCommand } from "./cli-run.mjs";
+import { runCommand } from "./cli-run.mjs";
+import { arg, has } from "./argv.mjs";
 import { isMain } from "./entry.mjs";
 
 const USAGE = "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor|visualize|mcp> ... [--dir <state folder>]";
@@ -39,17 +40,16 @@ async function command(argv, { dir: given } = {}) {
     const { newSession, newSessionWithFSRS, recordAttempt, recordAttemptWithGrade, mastery, masteryReceipt } = await import("./tutor/tutor.mjs");
     const { saveSession, loadSession, sessionExists, writeSessionFile } = await import("./tutor/tutorstore.mjs");
     const sub = argv[1]; const id = argv[2];
-    const has = (flag) => argv.includes(flag);
     if (sub === "plan") {
       const objectives = (arg(argv, "--objectives") || "").split(",").map((x) => x.trim()).filter(Boolean);
       const topic = arg(argv, "--topic") || "";
       // --enable-fsrs seeds per-item FSRS scheduling state (opt-in; default sessions are unchanged).
-      if (sessionExists(dir, id) && !has("--replace")) {
+      if (sessionExists(dir, id) && !has(argv, "--replace")) {
         return { code: 1, out: `tutor plan ${id}: a session with that id already exists; pass --replace to start it over` };
       }
-      const s = has("--enable-fsrs") ? newSessionWithFSRS({ topic, objectives }) : newSession({ topic, objectives });
+      const s = has(argv, "--enable-fsrs") ? newSessionWithFSRS({ topic, objectives }) : newSession({ topic, objectives });
       saveSession(dir, id, s);
-      const fsrsNote = has("--enable-fsrs") ? " (FSRS scheduling enabled)" : "";
+      const fsrsNote = has(argv, "--enable-fsrs") ? " (FSRS scheduling enabled)" : "";
       return { code: 0, out: `tutor plan ${id}: ${s.objectives.length} objective(s)${fsrsNote}` };
     }
     if (sub === "record") {
@@ -63,7 +63,7 @@ async function command(argv, { dir: given } = {}) {
         if (!now) return { code: 1, out: "tutor record: --now is required when --grade is given (ISO string or epoch ms)" };
         const grade = Number(gradeRaw);
         if (!Number.isInteger(grade) || grade < 0 || grade > 4) return { code: 1, out: "tutor record: --grade must be an integer 0-4 (0=fail,1=slip,2=lapse,3=review,4=easy)" };
-        recordAttemptWithGrade(s, { ...common, grade, correct: has("--correct") ? arg(argv, "--correct") === "true" : undefined, now });
+        recordAttemptWithGrade(s, { ...common, grade, correct: has(argv, "--correct") ? arg(argv, "--correct") === "true" : undefined, now });
       } else {
         recordAttempt(s, { ...common, correct: arg(argv, "--correct") === "true" });
       }
@@ -85,7 +85,7 @@ async function command(argv, { dir: given } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { due } = await import("./tutor/schedule.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor due: --now is required (ISO string or epoch ms)" };
-      const useFSRS = has("--use-fsrs");
+      const useFSRS = has(argv, "--use-fsrs");
       const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
       const list = due(s, { now, asOf: arg(argv, "--as-of") || undefined, useFSRS, desiredRetention });
       return { code: 0, out: `tutor due ${id}: ${list.length} objective(s) due\n` + list.map((d) => `  ${d.objective} (overdue since ${d.dueAt})`).join("\n") };
@@ -140,7 +140,7 @@ async function command(argv, { dir: given } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { studyPlan } = await import("./tutor/study.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study: --now is required (ISO string or epoch ms)" };
-      const useFSRS = has("--use-fsrs");
+      const useFSRS = has(argv, "--use-fsrs");
       const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
       const plan = studyPlan(s, { now, seed: arg(argv, "--seed") || undefined, useFSRS, desiredRetention });
       return { code: 0, out: `tutor study ${id}: ${plan.due.length} due, ${plan.misconceptions.length} misconception(s), mastery ${plan.mastery.ready ? "READY" : "not yet"}\n` +
@@ -168,7 +168,7 @@ async function command(argv, { dir: given } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { studyReceipt } = await import("./tutor/study.mjs");
       const now = arg(argv, "--now"); if (!now) return { code: 1, out: "tutor study-receipt: --now is required (ISO string or epoch ms)" };
-      const useFSRS = has("--use-fsrs");
+      const useFSRS = has(argv, "--use-fsrs");
       const desiredRetention = arg(argv, "--desired-retention") ? Number(arg(argv, "--desired-retention")) : 0.9;
       const r = studyReceipt(s, { now, seed: arg(argv, "--seed") || undefined, useFSRS, desiredRetention });
       writeSessionFile(dir, id, ".study-receipt.json", JSON.stringify(r, null, 2));
@@ -177,7 +177,7 @@ async function command(argv, { dir: given } = {}) {
     if (sub === "derive-schedule") {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { deriveScheduleReceipt } = await import("./tutor/fsrsderive.mjs");
-      const r = deriveScheduleReceipt(s, { optimize: has("--optimize") });
+      const r = deriveScheduleReceipt(s, { optimize: has(argv, "--optimize") });
       writeSessionFile(dir, id, ".derive-schedule.json", JSON.stringify(r, null, 2));
       const drift = r.perObjective.filter((p) => !p.match).map((p) => p.objective);
       const driftNote = drift.length ? `\n  DRIFT on: ${drift.join(", ")} (cached hint disagrees with the witnessed log; the log is authoritative)` : "";
@@ -198,12 +198,12 @@ async function command(argv, { dir: given } = {}) {
     writeFileSync(join(out, "crucible-thesis.json"), JSON.stringify(art.crucibleThesis, null, 2));
     writeFileSync(join(out, "gather-manifest.json"), JSON.stringify(art.gatherManifest, null, 2));
     let extra = "";
-    if (argv.includes("--crucible")) {
+    if (has(argv, "--crucible")) {
       const { crucibleAssess } = await import("./interop/crucible.mjs");
       const r = await crucibleAssess(join(out, "crucible-thesis.json"));
       extra += `\ncrucible: ${r.ran ? ("ran (exit " + r.code + ")") : r.reason}`;
     }
-    if (argv.includes("--gather")) {
+    if (has(argv, "--gather")) {
       const { gatherRun } = await import("./interop/gather.mjs");
       const r = await gatherRun(art.gatherManifest.sources);
       extra += `\ngather: ${r.ran ? (r.receipts.length + " source(s) processed") : r.reason}`;
