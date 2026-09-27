@@ -4,7 +4,7 @@
 // CHANGELOG heading and the README's release line.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { version } from "../src/index.mjs";
@@ -38,4 +38,14 @@ test("the newest CHANGELOG release heading is the package version", () => {
 
 test("the README's release line names the package version", () => {
   assert.ok(read("README.md").includes("**Release:** `" + pkg.version + "`"));
+});
+
+// The README's test count was typed by hand and nothing checked it. Every test in this suite is a
+// top-level test( call, so counting those lines gives the number node --test reports.
+test("the README's test count matches the tests in tests/", () => {
+  const files = readdirSync(join(ROOT, "tests")).filter((f) => f.endsWith(".test.mjs"));
+  const count = files.reduce((n, f) => n + (read(join("tests", f)).match(/^test\(/gm) || []).length, 0);
+  const m = read("README.md").match(/\*\*Tests:\*\* (\d+) /);
+  assert.ok(m, "README.md has a **Tests:** line");
+  assert.equal(Number(m[1]), count, `README says ${m[1]} tests; tests/ declares ${count}`);
 });

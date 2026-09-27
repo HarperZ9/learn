@@ -19,7 +19,10 @@ Affected: 1.6.0 and earlier.
   `learn_tutor_reverify` read any path, with a non-JSON file's first characters in the error.
   Ids now match `[A-Za-z0-9._-]{1,64}`, must not start with a dot or a hyphen and must not be a
   Windows device name. Every resolved path, after links and junctions, must stay inside the state
-  folder. Path arguments resolve inside it, and a failure carries a closed code and fixed text.
+  folder. Path arguments resolve inside it, and a failure carries a closed code and fixed text. A
+  path outside the folder on its text, such as a `\\host\share` UNC path, is refused before
+  anything opens it, so no SMB or WebDAV connection is made. A link whose target does not exist
+  is refused, not followed.
 - **Resume submitted and paid without the opt-in.** `learn resume` passed
   `allowIrreversible: true` on every call. After a halt at `assess`, a plain resume clicked the
   next `submit` step and a `cost` step, and the receipt filed the submit as a witnessed automated

@@ -61,6 +61,9 @@ yours. Zero external dependencies, Node 20 or newer.
   `submit` steps unless you chose witnessed automated submission, and at steps flagged `cost` or
   `irreversible` unless you pass `--allow-cost`. A step tagged `assess` never auto-completes, in
   either submission mode. The engine recognizes a graded page only when the workflow tags it.
+  The same holds for submits and fees: a final submit written as a plain `click` step, or a fee
+  without `cost`, runs as logistics, and the receipt lists it only as an ordinary step. Read a
+  workflow from someone else before you run it.
 - **Zero-dep MCP server.** `learn mcp` serves fifteen tools over stdio JSON-RPC for agent use:
   thirteen read-only, and two (`learn_tutor_plan`, `learn_tutor_record`) that write session files
   in your learn state folder. Actuation stays on the CLI.
@@ -218,9 +221,9 @@ file. The MCP surface never performs a real course action or answers a graded st
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 366 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
-  points and security fixtures, including a falsifiable test per integrity invariant. `learn doctor` re-checks the invariants
-  at runtime and must report `MATCH` on every line.
+- **Tests:** 381 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
+  points and security fixtures, including a falsifiable test per integrity invariant. `learn
+  doctor` re-checks the invariants at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
 
 ## Integrity boundary
