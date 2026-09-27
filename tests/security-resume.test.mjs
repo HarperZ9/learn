@@ -53,6 +53,10 @@ test("resume --submit witnessed-auto performs the submit and records the grant; 
   assert.equal(submit.authorizedBy, "resume --submit witnessed-auto");
   assert.equal(saved(dir, "r2").haltedAt, 3);
   assert.equal(clicked(dir, "r2", "#pay"), false);
+  await main(["receipt", "r2"], { dir });
+  const receipt = JSON.parse(readFileSync(join(dir, "runs", "r2.receipt.json"), "utf8"));
+  assert.equal(receipt.witnessedAutoSubmissions[0].authorizedBy, "resume --submit witnessed-auto", "the receipt names the grant");
+  assert.deepEqual(receipt.authorizedCostSteps, []);
 });
 
 test("--allow-cost lets the engine perform a cost step it reaches, and the ledger records who allowed it", async () => {
@@ -62,6 +66,21 @@ test("--allow-cost lets the engine perform a cost step it reaches, and the ledge
   assert.equal(saved(dir, "r3").status, "completed");
   const pay = rows(dir, "r3").find((e) => e.kind === "step" && e.summary === "clicked:#pay");
   assert.equal(pay.costAuthorizedBy, "resume --allow-cost");
+  await main(["receipt", "r3"], { dir });
+  const receipt = JSON.parse(readFileSync(join(dir, "runs", "r3.receipt.json"), "utf8"));
+  assert.deepEqual(receipt.authorizedCostSteps, [{ seq: 3, costAuthorizedBy: "resume --allow-cost" }]);
+});
+
+test("a library caller's grant is named in the ledger even without an explicit label", async () => {
+  const { run } = await import("../src/runtime/runner.mjs");
+  const { loadWorkflow } = await import("../src/workflow/schema.mjs");
+  const { FakeDriver } = await import("../src/actuation/driver.mjs");
+  const wf = loadWorkflow(JSON.parse(readFileSync(FIXTURE, "utf8")));
+  const steps = { ...wf, steps: wf.steps.filter((s) => s.kind !== "assess") };
+  const r = await run(steps, { driver: new FakeDriver(), submissionMode: "witnessed-auto", allowCost: true });
+  const entries = r.ledger.entries().map((e) => e.entry);
+  assert.equal(entries.find((e) => e.stepKind === "submit").authorizedBy, "submissionMode witnessed-auto");
+  assert.equal(entries.find((e) => e.summary === "clicked:#pay").costAuthorizedBy, "allowCost");
 });
 
 test("run --submit witnessed-auto is kept by a plain resume, while a cost step still halts", async () => {

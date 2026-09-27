@@ -57,9 +57,9 @@ export async function run(workflow, { driver, allowIrreversible = false, allowCo
         // state, so the receipt proves what was submitted and that the operator authorized it.
         entry.submission = "witnessed-auto";
         entry.submittedStateDigest = "sha256:" + sha256hex(JSON.stringify(before));
-        entry.authorizedBy = allowIrreversible ? "allowIrreversible" : authorizedBy;
+        entry.authorizedBy = allowIrreversible ? "allowIrreversible" : (authorizedBy ?? "submissionMode witnessed-auto");
       }
-      if (step.cost || step.irreversible) entry.costAuthorizedBy = allowIrreversible ? "allowIrreversible" : costAuthorizedBy;
+      if (step.cost || step.irreversible) entry.costAuthorizedBy = allowIrreversible ? "allowIrreversible" : (costAuthorizedBy ?? "allowCost");
       ledger.append(entry);
       if (step.kind === "complete") {
         completion = await getAdapter(workflow.adapter).captureCompletion(driver);

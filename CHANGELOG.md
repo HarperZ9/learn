@@ -25,7 +25,8 @@ Affected: 1.6.0 and earlier.
   next `submit` step and a `cost` step, and the receipt filed the submit as a witnessed automated
   submission. A resume now keeps the run's recorded mode, `--submit` takes only `manual` or
   `witnessed-auto`, and steps flagged `cost` or `irreversible` halt unless `--allow-cost` is given
-  on the invocation that reaches them. The ledger entry of each step a grant allowed names it.
+  on the invocation that reaches them. The ledger entry of each step a grant allowed names it,
+  and the receipt lists it (`witnessedAutoSubmissions[].authorizedBy`, `authorizedCostSteps`).
 - **Children of `LEARN_*_CMD` inherited the caller's folder and environment.** With the documented
   `python -m crucible`, a `crucible/` package in the folder where `learn assist --crucible` ran was
   executed. Children now start through the vendored safe spawn helper 1.0.0
