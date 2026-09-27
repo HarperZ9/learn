@@ -2,7 +2,9 @@
 // vendored safe spawn helper (src/_vendor/safe_spawn.mjs, hash-pinned in VENDORED.sha256):
 // the executable resolves to an absolute path, the child runs in a new private empty folder with
 // an environment allowlist (extended only by the names in LEARN_CHILD_ENV), Windows children get
-// NoDefaultCurrentDirectoryInExePath=1, and a Python child gets -P and PYTHONSAFEPATH=1.
+// NoDefaultCurrentDirectoryInExePath=1, and a Python child gets -P and PYTHONSAFEPATH=1. A bare
+// name is looked up on PATH without any entry that reaches the folder learn runs in, and the
+// child's PATH leaves those entries out as well.
 // Because the child's folder is private, every path handed to it must be absolute.
 import { run as safeRun, SpawnRefused } from "../_vendor/safe_spawn.mjs";
 

@@ -221,7 +221,7 @@ file. The MCP surface never performs a real course action or answers a graded st
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 381 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
+- **Tests:** 390 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
   points and security fixtures, including a falsifiable test per integrity invariant. `learn
   doctor` re-checks the invariants at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
@@ -259,7 +259,9 @@ learning aids via its `math_physics` lane. Point learn at them with `LEARN_CRUCI
 `LEARN_GATHER_CMD` and `LEARN_TELOS_CMD`, each a JSON argv array such as
 `["python", "-m", "crucible"]` with absolute paths for any file. Each child starts in a private
 empty folder with a short environment allowlist; name any other variable it needs in
-`LEARN_CHILD_ENV` (comma-separated).
+`LEARN_CHILD_ENV` (comma-separated). A bare command name is looked up on PATH without the folder
+you run learn from or any folder inside it, so a tool installed there, for example in a
+project's `node_modules/.bin`, needs its absolute path.
 
 ## License
 

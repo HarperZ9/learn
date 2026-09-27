@@ -4,14 +4,27 @@
 // conformance kit compares the copy's SHA-256 with the canonical one, so
 // per-tool choices are arguments, never edits. Every start resolves the
 // executable to an absolute path (an override variable must hold one; a PATH
-// walk skips relative entries, and on Windows a .exe anywhere beats a batch
-// shim), runs in a new private empty folder unless the caller names one, passes
-// an environment allowlist whose PATH keeps only absolute entries, plus
-// NoDefaultCurrentDirectoryInExePath=1 on Windows, refuses cmd.exe
-// metacharacters in any argument to a .cmd or .bat target, adds -P and
-// PYTHONSAFEPATH=1 for a Python target (3.11 or later), and adds the named CLI
-// profile's flags; an unproven profile needs a grant naming it. Messages never
-// print a resolved path, an argument or a value.
+// walk skips relative entries and entries that reach a working folder, and on
+// Windows a .exe anywhere beats a batch shim; a bare name holding ":" is
+// refused), runs in a new private empty folder unless the caller names one,
+// passes an environment allowlist whose PATH keeps what the walk keeps (on
+// POSIX, /bin:/usr/bin when that leaves nothing, since an empty PATH means the
+// current folder there), plus NoDefaultCurrentDirectoryInExePath=1 on Windows,
+// refuses cmd.exe metacharacters in any argument to a .cmd or .bat target, adds
+// -P and PYTHONSAFEPATH=1 for a Python target (3.11 or later), and adds the
+// named CLI profile's flags; an unproven profile needs a grant naming it.
+// Messages never print a resolved path, an argument or a value.
+// The working folders are the caller's current folder and the folder named for
+// the child. An entry reaches one when, resolved through links, it is that
+// folder or lies below it, by name or by file identity; on a filesystem without
+// file indices, any folder on the working folder's device counts. A filesystem
+// root or a folder holding the home folder counts only as itself. The running
+// node's folder and, on Windows, the Windows, System32 and SysWOW64 folders
+// always stay, and a working folder that is one of them guards nothing: the
+// caller already runs code from there. Each kept entry becomes its real folder,
+// so a link repointed after the check cannot change what starts. Windows PATH is
+// read as cmd.exe reads it, and an entry whose folder holds the PATH separator
+// leaves: programs disagree on it.
 // Node refuses to start a .cmd or .bat file without a shell (CVE-2024-27980),
 // so a batch target starts through %SystemRoot%\System32\cmd.exe with
 // /d /v:off /s /c and every argument quoted. The refusal rules match the Python
@@ -21,7 +34,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-export const SAFE_SPAWN_VERSION = "1.0.0";
+export const SAFE_SPAWN_VERSION = "1.0.1";
+export const POSIX_FALLBACK_PATH = "/bin:/usr/bin";
 export const BATCH_SUFFIXES = [".cmd", ".bat"];
 const STARTABLE = [".com", ".exe", ...BATCH_SUFFIXES];
 export const CMD_UNSAFE = new Set(['"', "%", "^", "&", "|", "<", ">", "!", "\r", "\n"]);
@@ -100,15 +114,129 @@ function fromAbsolute(p, exists, windows, suffixes, code) {
   return found;
 }
 
-/** [as written, unquoted] for each PATH entry that is an absolute path. */
-function pathEntries(value, windows) {
-  return (value || "").split(windows ? ";" : ":")
-    .map((r) => [r, r.trim().replace(/^"|"$/g, "")]).filter(([, b]) => b && isAbsolute(b, windows));
+/** [device, file index], the index 0n where the filesystem keeps none; null if unreadable. */
+function identity(p) {
+  try {
+    const st = fs.statSync(p, { bigint: true });
+    return [st.dev, st.ino];
+  } catch {
+    return null; // missing or unreadable: compared by name only
+  }
 }
 
-/** The absolute path of `name` (a bare name, or an absolute path), or SpawnRefused. */
+/** One folder by identity. With `unsure`, a folder without a file index matches any
+ * folder on its device, since such a filesystem can hide a second name for it. */
+function same(a, b, unsure) {
+  if (a === null || b === null || a[0] !== b[0]) return false;
+  return (a[1] === b[1] && b[1] !== 0n) || (unsure && (a[1] === 0n || b[1] === 0n));
+}
+
+/** `p` resolved through links; a missing tail is kept as written. */
+function realFolder(p, lib) {
+  const tail = [];
+  for (let at = p; ; at = lib.dirname(at)) {
+    try {
+      return lib.join(fs.realpathSync.native(at), ...tail);
+    } catch {
+      if (lib.dirname(at) === at) return lib.isAbsolute(p) ? lib.resolve(p) : p;
+      tail.unshift(lib.basename(at));
+    }
+  }
+}
+
+/** [name, identity] for the resolved folder `here`, then each folder above it. */
+function chain(here, windows) {
+  const lib = windows ? path.win32 : path.posix;
+  const out = [];
+  for (; ; here = lib.dirname(here)) {
+    out.push([windows ? here.toLowerCase() : here, identity(here)]);
+    if (lib.dirname(here) === here) return out;
+  }
+}
+
+const meets = (c, [name, key], unsure = false) => c.some(([n, k]) => n === name || same(k, key, unsure));
+
+/** The exact folders the caller already runs code from; nothing below them. */
+function trustedFolders(windows) {
+  const lib = windows ? path.win32 : path.posix;
+  const own = [path.dirname(process.execPath)];
+  const root = windows ? getVar(process.env, "SystemRoot") : "";
+  if (root) own.push(root, lib.join(root, "System32"), lib.join(root, "SysWOW64"));
+  return own.filter(Boolean).map((f) => chain(realFolder(f, lib), windows)[0]);
+}
+
+/** A function giving a PATH entry's real folder, or null when the entry reaches a
+ * working folder (see above). null on a simulated platform: no real folders to read. */
+function reachTest(cwd, windows) {
+  if (windows !== IS_WINDOWS) return null; // a simulated platform has no real folders to read
+  const lib = windows ? path.win32 : path.posix;
+  const folders = cwd == null ? [] : [cwd];
+  try {
+    folders.push(process.cwd());
+  } catch {
+    // a deleted working folder: no path reaches it
+  }
+  let home = [];
+  try {
+    const h = os.homedir();
+    if (h && lib.isAbsolute(h)) home = chain(realFolder(h, lib), windows);
+  } catch {
+    // no home folder is known
+  }
+  const trusted = trustedFolders(windows);
+  const guarded = folders.map((f) => chain(realFolder(f, lib), windows))
+    .filter((c) => !trusted.some((t) => meets(c.slice(0, 1), t)))
+    .map((c) => [c[0], c.length === 1 || meets(home, c[0])]);
+  return (entry) => {
+    const real = realFolder(entry, lib);
+    const c = chain(real, windows);
+    if (trusted.some((t) => meets(c.slice(0, 1), t))) return real;
+    return guarded.some(([f, wide]) => meets(wide ? c.slice(0, 1) : c, f, true)) ? null : real;
+  };
+}
+
+/** [as written, as read] per entry. POSIX reads an entry literally, so a quote or a
+ * leading space makes it relative there. Windows reads it as cmd.exe does: a ";"
+ * between double quotes does not split, and every quote goes. */
+function split(value, windows) {
+  if (!windows) return value.split(":").map((r) => [r, r]);
+  const out = [];
+  let start = 0;
+  let quoted = false;
+  for (let i = 0; i < value.length; i += 1) {
+    if (value[i] === '"') {
+      quoted = !quoted;
+    } else if (value[i] === ";" && !quoted) {
+      out.push(value.slice(start, i));
+      start = i + 1;
+    }
+  }
+  out.push(value.slice(start));
+  return out.map((r) => [r, r.replaceAll('"', "").trim()]);
+}
+
+/** [to hand on, to search] for each absolute PATH entry that reaches no working folder.
+ * With `admit`, the folder searched is the entry's real folder. A folder holding the
+ * separator leaves: Windows programs disagree on a quoted one, and POSIX cannot write
+ * one. The entry goes on as written only where every reader takes it the same way. */
+function pathEntries(value, windows, admit = null) {
+  const sep = windows ? ";" : ":";
+  const norm = (p) => (windows ? p.replaceAll("/", "\\").toLowerCase() : p);
+  const out = [];
+  for (const [raw, bare] of split(value || "", windows)) {
+    if (!bare || !isAbsolute(bare, windows)) continue;
+    const real = admit ? admit(bare) : bare;
+    if (real === null || real.includes(sep)) continue;
+    const kept = (raw === bare || raw === `"${bare}"`) && norm(real) === norm(bare);
+    out.push([kept ? raw : real, real]);
+  }
+  return out;
+}
+
+/** The absolute path of `name` (a bare name, or an absolute path), or SpawnRefused.
+ * `cwd` is the folder named for the child; PATH entries reaching it are skipped too. */
 export function resolve(name, { overrideVar, environ = process.env, exists = runnable,
-  windows = IS_WINDOWS } = {}) {
+  windows = IS_WINDOWS, cwd = null } = {}) {
   const listed = windows ? (getVar(environ, "PATHEXT") || ".COM;.EXE;.BAT;.CMD").split(";") : [];
   const suffixes = listed.filter((s) => STARTABLE.includes(s.toLowerCase()));
   const configured = overrideVar ? (getVar(environ, overrideVar) || "").trim() : "";
@@ -116,8 +244,13 @@ export function resolve(name, { overrideVar, environ = process.env, exists = run
   if (name.includes("/") || name.includes("\\")) {
     return fromAbsolute(name, exists, windows, suffixes, "BAD_PATH");
   }
+  if (windows && name.includes(":")) { // "C:tool" names a file in the current folder of drive C:
+    throw new SpawnRefused("BAD_PATH", "a bare name holding a colon was refused; "
+      + "give a bare name or a full path");
+  }
   const lib = windows ? path.win32 : path.posix;
-  const dirs = pathEntries(getVar(environ, "PATH"), windows).map(([, bare]) => bare);
+  const admit = reachTest(cwd, windows);
+  const dirs = pathEntries(getVar(environ, "PATH"), windows, admit).map(([, folder]) => folder);
   const groups = windows ? [[name + ".exe"], suffixes.map((s) => name + s)] : [[name]];
   for (const group of groups) {
     for (const d of dirs) {
@@ -148,14 +281,17 @@ export function isPython(p) {
   return PYTHON_NAMES.includes(base) || /^python3\.\d+$/.test(base);
 }
 
-/** The platform base plus `allow`, then `setEnv` on top. Nothing else passes. */
+/** The platform base plus `allow`, then `setEnv` on top. Nothing else passes.
+ * PATH keeps what `resolve` walks; `cwd` is the folder named for the child. */
 export function childEnv({ allow = [], setEnv = {}, environ = process.env,
-  windows = IS_WINDOWS, python = false } = {}) {
+  windows = IS_WINDOWS, python = false, cwd = null } = {}) {
   const norm = (k) => (windows ? k.toLowerCase() : k);
   const wanted = new Set([...(windows ? WINDOWS_BASE_ENV : POSIX_BASE_ENV), ...allow].map(norm));
   let out = Object.fromEntries(Object.entries(environ).filter(([k]) => wanted.has(norm(k))));
+  const admit = reachTest(cwd, windows);
   for (const key of Object.keys(out).filter((k) => k.toUpperCase() === "PATH")) {
-    out[key] = pathEntries(out[key], windows).map(([r]) => r).join(windows ? ";" : ":");
+    const kept = pathEntries(out[key], windows, admit).map(([r]) => r);
+    out[key] = windows ? kept.join(";") : (kept.join(":") || POSIX_FALLBACK_PATH);
   }
   const forced = { ...setEnv };
   if (python) forced.PYTHONSAFEPATH = "1";
@@ -276,7 +412,7 @@ export function boundedRun(argv, { input, timeout, cwd, env, label = "child" } =
 export async function run(name, args = [], { profile = null, overrideVar, input, timeout = 600000,
   allowEnv = [], setEnv = {}, grants = [], cwd = null, files = {}, environ = process.env,
   exists = runnable, windows = IS_WINDOWS, tmpdir, runner = boundedRun } = {}) {
-  const exe = resolve(name, { overrideVar, environ, exists, windows });
+  const exe = resolve(name, { overrideVar, environ, exists, windows, cwd });
   const label = path.win32.basename(name); // never the resolved path
   let session;
   try {
@@ -289,7 +425,7 @@ export async function run(name, args = [], { profile = null, overrideVar, input,
     const { argv, prof } = buildArgv(exe, typeof args === "function" ? args(paths) : [...args],
       { profile, grants, windows });
     const env = childEnv({ allow: [...allowEnv, ...(prof ? prof.env : [])], setEnv, environ,
-      windows, python: isPython(exe) });
+      windows, python: isPython(exe), cwd });
     return await runner(argv, { input, timeout, cwd: cwd ?? session.cwd, env, label });
   } catch (err) {
     if (err instanceof SpawnRefused || err.code === "ETIMEDOUT") throw err;
