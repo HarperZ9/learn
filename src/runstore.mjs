@@ -16,9 +16,11 @@ export function writeRunFile(dir, id, suffix, text) {
   return p;
 }
 
-export function saveRun(dir, id, { workflow, ledger, status, haltedAt, completion }) {
+// submissionMode is the mode the run was started with; a resume reads it back and never
+// widens it on its own. Files from 1.6.0 carry no mode and resume as "manual".
+export function saveRun(dir, id, { workflow, ledger, status, haltedAt, completion, submissionMode = "manual" }) {
   return writeRunFile(dir, id, ".json",
-    JSON.stringify({ workflow, status, haltedAt, completion, entries: ledger.entries() }, null, 2));
+    JSON.stringify({ workflow, status, haltedAt, completion, submissionMode, entries: ledger.entries() }, null, 2));
 }
 
 export function loadRun(dir, id) {

@@ -1,30 +1,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { loadWorkflow } from "./workflow/schema.mjs";
-import { run, resume } from "./runtime/runner.mjs";
-import { FakeDriver } from "./actuation/driver.mjs";
-import { saveRun, loadRun, writeRunFile } from "./runstore.mjs";
-import { buildReceipt } from "./receipt/receipt.mjs";
 import { Ledger } from "./accountability/ledger.mjs";
 import { doctor } from "./doctor.mjs";
 import { status } from "./status.mjs";
 import { stateRoot } from "./state.mjs";
 import { LearnError } from "./errors.mjs";
-import "./adapters/fake.mjs";
-import "./adapters/generic.mjs";
-import "./adapters/lms.mjs";
-
-function arg(argv, flag) { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : null; }
-
-// FakeDriver by default (offline/deterministic). `--native` attaches to the operator's real
-// browser via native-control (imported lazily so the CLI + tests never require it otherwise).
-async function makeDriver(argv) {
-  if (argv.includes("--native")) {
-    const { NativeDriver } = await import("./actuation/native-driver.mjs");
-    return NativeDriver.open(arg(argv, "--url") || "", { match: arg(argv, "--match") || undefined });
-  }
-  return new FakeDriver();
-}
+import { arg, runCommand } from "./cli-run.mjs";
 
 const USAGE = "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor|visualize> ... [--dir <state folder>]";
 
@@ -43,35 +24,8 @@ async function command(argv, { dir: given } = {}) {
   const [cmd] = argv;
   const dirFlag = arg(argv, "--dir");
   const dir = dirFlag ? resolve(dirFlag) : (given ?? stateRoot().dir);
-  if (cmd === "run") {
-    const wf = loadWorkflow(JSON.parse(readFileSync(argv[1], "utf8")));
-    const id = arg(argv, "--id") || "run";
-    const submissionMode = arg(argv, "--submit") === "witnessed-auto" ? "witnessed-auto" : "manual";
-    const r = await run(wf, { driver: await makeDriver(argv), submissionMode });
-    saveRun(dir, id, { workflow: wf, ...r });
-    return { code: 0, out: `run ${id}: ${r.status}${r.haltedAt != null ? " @step " + r.haltedAt : ""}` };
-  }
-  if (cmd === "resume") {
-    const id = argv[1]; const prev = loadRun(dir, id);
-    const attest = arg(argv, "--attest");
-    const humanAttest = attest ? { seq: prev.haltedAt, note: attest, at: new Date(0).toISOString() } : null;
-    const submissionMode = arg(argv, "--submit") === "witnessed-auto" ? "witnessed-auto" : "manual";
-    const r = await resume(prev.workflow, { driver: await makeDriver(argv), ledger: prev.ledger, haltedAt: prev.haltedAt, allowIrreversible: true, submissionMode, humanAttest });
-    saveRun(dir, id, { workflow: prev.workflow, ...r });
-    return { code: 0, out: `resume ${id}: ${r.status}` };
-  }
-  if (cmd === "verify") {
-    const prev = loadRun(dir, argv[1]); const v = prev.ledger.verify();
-    return { code: v.ok ? 0 : 1, out: v.ok ? "chain ok" : `chain BROKEN at ${v.brokenAt}` };
-  }
-  if (cmd === "receipt") {
-    const id = argv[1]; const prev = loadRun(dir, id);
-    const { json, markdown, html } = buildReceipt({ workflow: prev.workflow, ledger: prev.ledger, completion: prev.completion });
-    writeRunFile(dir, id, ".receipt.json", JSON.stringify(json, null, 2));
-    writeRunFile(dir, id, ".receipt.md", markdown);
-    writeRunFile(dir, id, ".receipt.html", html);
-    return { code: 0, out: `receipt written: runs/${id}.receipt.json + .md + .html (print .html for PDF)` };
-  }
+  const engine = await runCommand(cmd, argv, dir);
+  if (engine) return engine;
   if (cmd === "doctor") {
     const d = await doctor();
     return { code: d.status === "MATCH" ? 0 : 1, out: `learn doctor: ${d.status}\n` + d.checks.map((c) => `  [${c.status}] ${c.name}`).join("\n") };
