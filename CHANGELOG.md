@@ -52,7 +52,8 @@ Affected: 1.6.0 and earlier.
 - **No silent overwrite.** `learn_tutor_plan` and `learn tutor plan` refuse to replace an existing
   session unless `replace: true` or `--replace` is given.
 - **MCP paths.** `learn_dry_run` takes `workflow` inline or `workflowPath` inside the state
-  folder; `packetPath` and `file` resolve inside it too.
+  folder; `packetPath` and `file` resolve inside it too. `learn_tutor_reverify` names each
+  receipt relative to the state folder (`tutor/<id>.mastery.json`), not by its absolute path.
 - **Peer commands.** A `LEARN_*_CMD` child sees only allowlisted variables and starts in a private
   folder, and a relative path in the command is refused. The interop functions `crucibleAssess`,
   `gatherRun` and `telosRender` are async; they are not package exports.

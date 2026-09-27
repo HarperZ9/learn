@@ -165,3 +165,22 @@ test("a path argument outside the state folder is refused before any filesystem 
   assert.equal(failure(inside).code, "NOT_FOUND");
   assert.ok(seen.length > 0, "the filesystem spy recorded nothing, so the check above proves nothing");
 });
+
+// Review F5. A successful reverify named each receipt by the absolute path the server built.
+// Files are now named relative to the state folder, the same form the caller passes in `file`.
+test("learn_tutor_reverify names each receipt by its place in the state folder, never by the absolute path", async () => {
+  const { state } = layout();
+  const { newSession, recordAttempt, masteryReceipt } = await import("../src/tutor/tutor.mjs");
+  const s = newSession({ topic: "t", objectives: ["x"] });
+  for (const q of ["q1", "q2", "q3"]) recordAttempt(s, { objective: "x", prompt: q, answer: "a", correct: true });
+  const receipt = JSON.stringify(masteryReceipt(s));
+  mkdirSync(join(state, "tutor"));
+  writeFileSync(join(state, "tutor", "s1.mastery.json"), receipt);
+  writeFileSync(join(state, "r.json"), receipt);
+  const all = await call("learn_tutor_reverify", { sessionId: "s1" }, state);
+  const one = await call("learn_tutor_reverify", { sessionId: "s1", file: "r.json" }, state);
+  const files = (res) => JSON.parse(res.result.content[0].text).results.map((r) => [r.file, r.verdict]);
+  assert.deepEqual(files(all), [["tutor/s1.mastery.json", "VERIFIED"]]);
+  assert.deepEqual(files(one), [["r.json", "VERIFIED"]]);
+  for (const res of [all, one]) assertNoLeak(res, state);
+});

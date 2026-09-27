@@ -4,6 +4,7 @@
 // (LEARN_HOME, else a per-user data folder). No tool drives a browser; actuation (real runs)
 // stays on the operator-driven CLI. Ids and paths are confined to the state folder, and a tool
 // failure is an isError result with a closed code and a fixed detail (src/errors.mjs).
+import path from "node:path";
 import { doctor } from "./doctor.mjs";
 import { version } from "./index.mjs";
 import { isMain } from "./entry.mjs";
@@ -119,7 +120,11 @@ export async function dispatch(name, rawArgs = {}, { dir = stateRoot().dir } = {
     case "learn_tutor_reverify": {
       checkId(args.sessionId, "sessionId");
       const file = args.file === undefined || args.file === null ? null : confinedPath(dir, args.file, "file");
-      return { sessionId: args.sessionId, ...reverifyFiles(dir, args.sessionId, { file }) };
+      const r = reverifyFiles(dir, args.sessionId, { file });
+      // Each receipt is named by its place inside the state folder, the form `file` takes, and
+      // never by the absolute path the server built.
+      const results = r.results.map((x) => ({ ...x, file: path.relative(dir, x.file).split(path.sep).join("/") }));
+      return { sessionId: args.sessionId, ...r, results };
     }
     case "learn_tutor_prooflesson": {
       const { proofLesson, misconceptionFromPacket } = await import("./tutor/prooflesson.mjs");
