@@ -1,12 +1,14 @@
 // Real-browser driver: implements the same Driver interface as FakeDriver, over the native-control
 // CDP client (zero-dep, no Playwright). Not exercised in CI — real runs need the operator's
 // authenticated browser. The path to native-control is overridable via LEARN_NATIVE_CONTROL.
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 // native-control is not bundled: real runs drive the operator's own authenticated browser. Its
 // location comes from LEARN_NATIVE_CONTROL; there is no hardcoded default, so a public checkout
 // carries no local path and a fresh --native run fails with a clear instruction instead of a
-// cryptic module-not-found deep in an import.
+// cryptic module-not-found deep in an import. The value must be absolute: a relative one would
+// resolve against the folder the command started in and import whatever browser.mjs sits there.
 const NC_ROOT = process.env.LEARN_NATIVE_CONTROL;
 let _nc = null;
 async function nc() {
@@ -17,9 +19,15 @@ async function nc() {
       "the default (fake) driver needs nothing.",
     );
   }
+  if (!path.isAbsolute(NC_ROOT)) {
+    throw new Error(
+      "--native: LEARN_NATIVE_CONTROL must be an absolute path to the native-control directory; " +
+      "a relative path would load code from the folder the command started in.",
+    );
+  }
   if (!_nc) {
     try {
-      _nc = await import(pathToFileURL(NC_ROOT + "/browser.mjs").href);
+      _nc = await import(pathToFileURL(path.join(NC_ROOT, "browser.mjs")).href);
     } catch (err) {
       throw new Error(
         `--native could not load native-control from LEARN_NATIVE_CONTROL=${NC_ROOT}: ${err.message}`,

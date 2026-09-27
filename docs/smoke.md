@@ -7,8 +7,9 @@ logistics automated, **you** do the graded steps, everything witnessed, receipt 
 ## Prerequisites
 1. Chrome running with the remote-debug port on the Telos automation profile (native-control's
    `ensureChrome`), and **you signed into the LMS** in that profile.
-2. `LEARN_NATIVE_CONTROL` set to the native-control folder. There is no default: without it a
-   `--native` run stops at once with a setup message and imports nothing.
+2. `LEARN_NATIVE_CONTROL` set to the absolute path of the native-control folder. There is no
+   default: without it, or with a relative path, a `--native` run stops at once with a setup
+   message and imports nothing.
 
 ## 1. Write a workflow for the course
 Tag every graded element `assess` — the engine will halt there for you. Example

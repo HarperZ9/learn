@@ -35,6 +35,8 @@ Affected: 1.6.0 and earlier.
   (`src/_vendor/safe_spawn.mjs`, pinned in `VENDORED.sha256`): absolute executable, private empty
   folder, environment allowlist extended only by `LEARN_CHILD_ENV`,
   `NoDefaultCurrentDirectoryInExePath=1` on Windows, `-P` and `PYTHONSAFEPATH=1` for Python.
+  For the same reason `LEARN_NATIVE_CONTROL` must be an absolute path: a relative value imported a
+  `browser.mjs` from the folder where `learn run --native` started.
 - The shipped `docs/smoke.md` no longer names a local development folder. The code default was
   already removed on `main` and ships here for the first time.
 
