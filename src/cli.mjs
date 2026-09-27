@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { Ledger } from "./accountability/ledger.mjs";
@@ -6,8 +7,9 @@ import { status } from "./status.mjs";
 import { stateRoot } from "./state.mjs";
 import { LearnError } from "./errors.mjs";
 import { arg, runCommand } from "./cli-run.mjs";
+import { isMain } from "./entry.mjs";
 
-const USAGE = "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor|visualize> ... [--dir <state folder>]";
+const USAGE = "usage: learn <run|resume|verify|receipt|doctor|status|assist|tutor|visualize|mcp> ... [--dir <state folder>]";
 
 // State lives in the learn state folder: --dir when given, else LEARN_HOME, else a per-user data
 // folder (src/state.mjs). An id that would leave that folder is refused with exit code 1.
@@ -228,8 +230,18 @@ async function command(argv, { dir: given } = {}) {
   return { code: 1, out: USAGE };
 }
 
-// Direct invocation: `node src/cli.mjs ...`
-const invoked = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/").replace(/^([A-Za-z]):/, "$1:"));
-if (invoked) {
-  main(process.argv.slice(2)).then((r) => { process.stdout.write(r.out + "\n"); process.exit(r.code); });
+// Program start: `learn ...` through npm's bin, or `node src/cli.mjs ...`. `learn mcp` hands
+// stdin and stdout to the MCP server and prints nothing of its own.
+if (isMain(import.meta.url)) {
+  const argv = process.argv.slice(2);
+  if (argv[0] === "mcp") {
+    const { serve } = await import("./mcp.mjs");
+    const dirFlag = arg(argv, "--dir");
+    serve(dirFlag ? { dir: resolve(dirFlag) } : {});
+  } else {
+    main(argv).then(
+      (r) => process.stdout.write(r.out + "\n", () => process.exit(r.code)),
+      (err) => { process.stderr.write(`learn: ${(err && err.stack) || err}\n`); process.exit(1); },
+    );
+  }
 }

@@ -6,7 +6,7 @@
   "license": "LicenseRef-fair-source",
   "author": "Zain Dana Harper (github.com/HarperZ9)",
   "keywords": ["accountability", "credential", "provenance", "learning", "automation", "zero-dependency", "telos"],
-  "bin": { "learn": "src/cli.mjs" },
+  "bin": { "learn": "src/cli.mjs", "learn-mcp": "src/mcp.mjs" },
   "exports": {
     ".": "./src/index.mjs",
     "./doctor": "./src/doctor.mjs",

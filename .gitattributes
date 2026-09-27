@@ -1,3 +1,8 @@
+# Every text file is stored and checked out with LF. The published package then carries LF,
+# so the bins' #!/usr/bin/env node line works on Linux and macOS, and a package packed on
+# Windows matches one packed anywhere else.
+* text=auto eol=lf
+
 # The art under docs/art/ is generated. render_repo_art.py writes LF on every
 # platform, so pin the checkout to LF as well and each file's byte count and
 # SHA-256 stay the same whoever cloned the repository.

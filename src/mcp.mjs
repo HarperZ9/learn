@@ -1,9 +1,12 @@
+#!/usr/bin/env node
 // Zero-dependency MCP stdio server (JSON-RPC 2.0, newline-delimited). Read tools plus two that
 // write: learn_tutor_plan and learn_tutor_record save session files inside the learn state folder
 // (LEARN_HOME, else a per-user data folder). No tool drives a browser; actuation (real runs)
 // stays on the operator-driven CLI. Ids and paths are confined to the state folder, and a tool
 // failure is an isError result with a closed code and a fixed detail (src/errors.mjs).
 import { doctor } from "./doctor.mjs";
+import { version } from "./index.mjs";
+import { isMain } from "./entry.mjs";
 import { status } from "./status.mjs";
 import { loadRun } from "./runstore.mjs";
 import { buildReceipt } from "./receipt/receipt.mjs";
@@ -148,7 +151,7 @@ export async function handle(msg, ctx = {}) {
   const reply = (result) => ({ jsonrpc: "2.0", id: msg.id, result });
   const fail = (code, message) => ({ jsonrpc: "2.0", id: msg.id, error: { code, message } });
   if (msg.method === "initialize") {
-    return reply({ protocolVersion: "2024-11-05", serverInfo: { name: "learn", version: "1.0.0" }, capabilities: { tools: {} } });
+    return reply({ protocolVersion: "2024-11-05", serverInfo: { name: "learn", version }, capabilities: { tools: {} } });
   }
   if (msg.method === "notifications/initialized") return null;
   if (msg.method === "tools/list") return reply({ tools: TOOLS });
@@ -184,4 +187,5 @@ export function serve({ dir = stateRoot().dir } = {}) {
   });
 }
 
-if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("src/mcp.mjs")) serve();
+// Program start: `learn-mcp` through npm's bin, or `node src/mcp.mjs`.
+if (isMain(import.meta.url)) serve();
