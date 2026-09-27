@@ -221,7 +221,7 @@ file. The MCP surface never performs a real course action or answers a graded st
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 390 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
+- **Tests:** 392 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
   points and security fixtures, including a falsifiable test per integrity invariant. `learn
   doctor` re-checks the invariants at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).

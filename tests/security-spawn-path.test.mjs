@@ -11,8 +11,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, statSync,
-  symlinkSync, writeFileSync,
+  chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync,
+  statSync, symlinkSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join, parse } from "node:path";
@@ -52,9 +52,11 @@ function callsHelper(folder) {
   return write(join(folder, "peer"), '#!/bin/sh\nexec helper "$@"\n', 0o755);
 }
 
-// root/course is where learn runs and where the plants go; root/bin holds the real `tool`.
-function world() {
+// root/course is where learn runs and where the plants go; root/bin holds the real `tool`. The
+// whole root is removed when the test `t` ends.
+function world(t) {
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), "learn-path-")));
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
   const w = {
     root, course: join(root, "course"), bin: join(root, "bin"), state: join(root, "state"),
     marker: join(root, "PLANTED-RAN"), log: join(root, "REAL-RAN.json"),
@@ -93,9 +95,9 @@ const sameFolder = (a, b) => {
   return x.dev === y.dev && x.ino === y.ino;
 };
 
-test("LEARN_TELOS_CMD by bare name skips PATH entries at or below the course folder", () => {
+test("LEARN_TELOS_CMD by bare name skips PATH entries at or below the course folder", (t) => {
   // npm run and an activated project venv put a folder like node_modules/.bin first on PATH.
-  const w = world();
+  const w = world(t);
   const below = join(w.course, "node_modules", ".bin");
   plant(below, "tool", w.marker);
   plant(w.course, "tool", w.marker);
@@ -104,24 +106,39 @@ test("LEARN_TELOS_CMD by bare name skips PATH entries at or below the course fol
   assert.match(r.stdout, /-> MATCH \(profile real-peer\)/);
 });
 
-test("LEARN_CRUCIBLE_CMD by bare name skips a PATH entry naming the course folder", () => {
-  const w = world();
+test("LEARN_CRUCIBLE_CMD by bare name skips a PATH entry naming the course folder", (t) => {
+  const w = world(t);
   plant(w.course, "tool", w.marker);
   const r = assist(w, "--crucible", [w.course, w.bin], { LEARN_CRUCIBLE_CMD: "tool" });
   realRan(w, r, ["assess", join(w.state, "assist", "crucible-thesis.json")]);
   assert.match(r.stdout, /crucible: ran \(exit 0\)/);
 });
 
-test("LEARN_GATHER_CMD by bare name skips a PATH entry naming the course folder", () => {
-  const w = world();
+// The scripts folder of a virtual environment: Scripts on Windows, bin elsewhere.
+const venvScripts = (w) => join(w.course, ".venv", WINDOWS ? "Scripts" : "bin");
+
+test("the documented [\"python\", \"-m\", \"crucible\"] skips a venv inside the course folder", (t) => {
+  // An activated venv puts its scripts folder first on PATH. Inside the course folder that folder
+  // is course content, so bare python resolves to the next Python on PATH, which gets -P.
+  const w = world(t);
+  plant(venvScripts(w), "python", w.marker);
+  realTool(w.bin, "python", w.log);
+  const r = assist(w, "--crucible", [venvScripts(w), w.bin],
+    { LEARN_CRUCIBLE_CMD: JSON.stringify(["python", "-m", "crucible"]) });
+  realRan(w, r, ["-P", "-m", "crucible", "assess", join(w.state, "assist", "crucible-thesis.json")]);
+  assert.match(r.stdout, /crucible: ran \(exit 0\)/);
+});
+
+test("LEARN_GATHER_CMD by bare name skips a PATH entry naming the course folder", (t) => {
+  const w = world(t);
   plant(w.course, "tool", w.marker);
   const r = assist(w, "--gather", [w.course, w.bin], { LEARN_GATHER_CMD: JSON.stringify(["tool"]) });
   realRan(w, r, ["run", "https://example.org/paper"]);
   assert.match(r.stdout, /gather: 1 source\(s\) processed/);
 });
 
-test("a junction or symlink to the course folder on PATH is skipped", () => {
-  const w = world();
+test("a junction or symlink to the course folder on PATH is skipped", (t) => {
+  const w = world(t);
   plant(w.course, "tool", w.marker);
   const at = join(w.root, "linkbin");
   symlinkSync(w.course, at, WINDOWS ? "junction" : "dir");
@@ -130,19 +147,19 @@ test("a junction or symlink to the course folder on PATH is skipped", () => {
   realRan(w, r, ["render"]);
 });
 
-test("a quoted PATH entry naming the course folder is skipped", () => {
+test("a quoted PATH entry naming the course folder is skipped", (t) => {
   // 1.0.0 stripped the quotes and searched the folder. Windows reads the entry as the folder
   // too, so it must leave; POSIX reads the quotes literally, so the entry is relative there.
-  const w = world();
+  const w = world(t);
   plant(w.course, "tool", w.marker);
   const r = visualize(w, [`"${w.course}"`, w.bin], JSON.stringify(["tool"]));
   realRan(w, r, ["render"]);
 });
 
-test("a peer command's own lookup never reaches a helper planted in the course folder", () => {
+test("a peer command's own lookup never reaches a helper planted in the course folder", (t) => {
   // The peer command is absolute and outside the course folder; the helper it runs by bare name
   // is looked up on the PATH learn hands it, which must not name the course folder.
-  const w = world();
+  const w = world(t);
   plant(w.course, "helper", w.marker);
   const helpers = join(w.root, "helpers");
   realTool(helpers, "helper", w.log);
@@ -151,11 +168,11 @@ test("a peer command's own lookup never reaches a helper planted in the course f
   realRan(w, r, ["render"]);
 });
 
-test("an entry with inner quotes never hands the course folder to a peer command", windowsOnly, () => {
+test("an entry with inner quotes never hands the course folder to a peer command", windowsOnly, (t) => {
   // cmd.exe drops every quote, so "<course>"\bin is <course>\bin to the peer command's shell.
   // 1.0.0 stripped only a leading and a trailing quote, found no such folder, and handed the
   // entry on as written.
-  const w = world();
+  const w = world(t);
   plant(join(w.course, "bin"), "helper", w.marker);
   const helpers = join(w.root, "helpers");
   realTool(helpers, "helper", w.log);
@@ -164,10 +181,10 @@ test("an entry with inner quotes never hands the course folder to a peer command
   realRan(w, r, ["render"]);
 });
 
-test("a drive-relative command name is refused before anything starts", windowsOnly, () => {
+test("a drive-relative command name is refused before anything starts", windowsOnly, (t) => {
   // C:tool names a file in drive C's current folder, which is the course folder here. The 1.0.0
   // lookup already failed closed on it (NOT_FOUND); this pins the refusal as BAD_PATH.
-  const w = world();
+  const w = world(t);
   copyFileSync(join(process.env.SystemRoot, "System32", "hostname.exe"), join(w.course, "tool.exe"));
   plant(w.course, "tool", w.marker);
   const drive = parse(w.course).root.slice(0, 2);
@@ -179,12 +196,25 @@ test("a drive-relative command name is refused before anything starts", windowsO
   assert.match(r.stdout, /crucible: crucible was not started \(BAD_PATH\)/);
 });
 
-test("control: a peer command named by absolute path inside the course folder still runs", () => {
+test("control: a peer command named by absolute path inside the course folder still runs", (t) => {
   // Only the PATH lookup drops the course folder. An absolute command is the user's own choice.
-  const w = world();
+  const w = world(t);
   const inside = join(w.root, "COURSE-TOOL-RAN.json");
   const tool = realTool(join(w.course, "node_modules", ".bin"), "tool", inside);
   const r = visualize(w, [w.bin], JSON.stringify([tool]));
   realRan(w, r, ["render"], inside);
   assert.equal(existsSync(w.log), false, "the PATH tool ran instead of the named one");
+});
+
+test("control: a venv interpreter named by absolute path inside the course folder still runs", (t) => {
+  // The documented way to use a course venv: name its interpreter by absolute path. It still gets
+  // -P, and the other Python on PATH does not run.
+  const w = world(t);
+  const inside = join(w.root, "VENV-PYTHON-RAN.json");
+  const python = realTool(venvScripts(w), "python", inside);
+  realTool(w.bin, "python", w.log);
+  const r = assist(w, "--crucible", [venvScripts(w), w.bin],
+    { LEARN_CRUCIBLE_CMD: JSON.stringify([python, "-m", "crucible"]) });
+  realRan(w, r, ["-P", "-m", "crucible", "assess", join(w.state, "assist", "crucible-thesis.json")], inside);
+  assert.equal(existsSync(w.log), false, "the PATH python ran instead of the named one");
 });
