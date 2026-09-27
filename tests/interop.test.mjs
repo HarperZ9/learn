@@ -30,11 +30,11 @@ test("assistArtifacts bundles assist + crucible thesis + gather manifest", () =>
   assert.equal(art.crucibleThesis.claims.length, art.assist.claims.length);
 });
 
-test("interop shell-outs fail closed with a clear reason when no command is configured", () => {
-  const c = crucibleAssess("nope.json", { cmd: "" });
+test("interop shell-outs fail closed with a clear reason when no command is configured", async () => {
+  const c = await crucibleAssess("nope.json", { cmd: "" });
   assert.equal(c.ran, false);
   assert.match(c.reason, /crucible command/i);
-  const g = gatherRun(["https://x"], { cmd: "" });
+  const g = await gatherRun(["https://x"], { cmd: "" });
   assert.equal(g.ran, false);
   assert.match(g.reason, /gather command/i);
 });

@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { loadWorkflow } from "./workflow/schema.mjs";
 import { run, resume } from "./runtime/runner.mjs";
 import { FakeDriver } from "./actuation/driver.mjs";
@@ -217,7 +217,7 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   if (cmd === "assist") {
     const { assistArtifacts } = await import("./assist/assist.mjs");
     const draft = readFileSync(argv[1], "utf8");
-    const out = arg(argv, "--out") || join(dir, "assist");
+    const out = resolve(arg(argv, "--out") || join(dir, "assist"));
     mkdirSync(out, { recursive: true });
     const art = assistArtifacts(draft, { title: arg(argv, "--title") || undefined });
     writeFileSync(join(out, "assist.json"), JSON.stringify(art.assist, null, 2));
@@ -226,12 +226,12 @@ export async function main(argv, { dir = process.cwd() } = {}) {
     let extra = "";
     if (argv.includes("--crucible")) {
       const { crucibleAssess } = await import("./interop/crucible.mjs");
-      const r = crucibleAssess(join(out, "crucible-thesis.json"));
+      const r = await crucibleAssess(join(out, "crucible-thesis.json"));
       extra += `\ncrucible: ${r.ran ? ("ran (exit " + r.code + ")") : r.reason}`;
     }
     if (argv.includes("--gather")) {
       const { gatherRun } = await import("./interop/gather.mjs");
-      const r = gatherRun(art.gatherManifest.sources);
+      const r = await gatherRun(art.gatherManifest.sources);
       extra += `\ngather: ${r.ran ? (r.receipts.length + " source(s) processed") : r.reason}`;
     }
     return { code: 0, out: `assist: ${art.assist.claims.length} claim(s) + ${art.assist.sources.length} source(s) -> ${out}/{assist,crucible-thesis,gather-manifest}.json (authors nothing — flags what YOU verify)${extra}` };
@@ -239,12 +239,12 @@ export async function main(argv, { dir = process.cwd() } = {}) {
   if (cmd === "visualize") {
     const { toTelosSceneSpec, telosRender, toAidLedgerEntry } = await import("./interop/telos.mjs");
     const concept = JSON.parse(readFileSync(argv[1], "utf8"));
-    const out = arg(argv, "--out") || join(dir, "runs");
+    const out = resolve(arg(argv, "--out") || join(dir, "runs"));
     mkdirSync(out, { recursive: true });
     const spec = toTelosSceneSpec(concept);
     const specPath = join(out, "scene-request.json");
     writeFileSync(specPath, JSON.stringify(spec, null, 2));
-    const render = telosRender(specPath);
+    const render = await telosRender(specPath);
     const ledger = new Ledger();
     ledger.append(toAidLedgerEntry(render, { concept, seq: 0 }));
     const slug = (spec.concept.title || "concept").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "concept";

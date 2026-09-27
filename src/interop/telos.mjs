@@ -2,8 +2,9 @@
 // concept, and (Task 2) delegate rendering to the telos CLI over a JSON boundary. Rendering is an
 // AID: every result is tagged provenance:"aid" and is structurally barred from graded work.
 // Zero-dep (node builtins). learn never imports telos internals — it asks over LEARN_TELOS_CMD.
+import { resolve } from "node:path";
 import { sha256hex } from "../accountability/witness.mjs";
-import { spawnSync } from "node:child_process";
+import { parseCommand, runPeer, refusalReason } from "./spawn.mjs";
 
 // Pure: turn a concept descriptor into a scene-spec request. No I/O.
 export function toTelosSceneSpec(concept = {}, { lane = "math_physics" } = {}) {
@@ -16,14 +17,25 @@ export function toTelosSceneSpec(concept = {}, { lane = "math_physics" } = {}) {
   return spec;
 }
 
-// Delegate rendering to the telos CLI. Configure LEARN_TELOS_CMD, e.g. "node ../telos/src/cli.mjs"
-// (assumed contract: `render <specPath>` -> render-result JSON on stdout). ALWAYS fail-closed and
-// ALWAYS tagged provenance:"aid". Never throws.
-export function telosRender(specPath, { cmd = process.env.LEARN_TELOS_CMD } = {}) {
-  if (!cmd) return { ran: false, verdict: "UNVERIFIABLE", failure: "engine-unavailable", provenance: "aid", reason: "no telos command configured (set LEARN_TELOS_CMD)" };
-  const parts = cmd.split(/\s+/).filter(Boolean);
-  const res = spawnSync(parts[0], [...parts.slice(1), "render", specPath], { encoding: "utf8", timeout: 120000 });
-  if (res.error) return { ran: false, verdict: "UNVERIFIABLE", failure: "engine-unavailable", provenance: "aid", reason: String(res.error.message) };
+// Delegate rendering to the telos CLI. Configure LEARN_TELOS_CMD as a JSON argv array, for
+// example ["node", "/abs/path/to/telos/src/cli.mjs"], or the whitespace form with absolute paths
+// (assumed contract: `render <specPath>` -> render-result JSON on stdout). The child starts
+// through spawn.mjs. ALWAYS fail-closed and ALWAYS tagged provenance:"aid". Never throws.
+export async function telosRender(specPath, { cmd = process.env.LEARN_TELOS_CMD } = {}) {
+  const unavailable = (reason) => ({ ran: false, verdict: "UNVERIFIABLE", failure: "engine-unavailable", provenance: "aid", reason });
+  let argv;
+  try {
+    argv = parseCommand(cmd);
+  } catch (err) {
+    return unavailable(refusalReason("LEARN_TELOS_CMD", err));
+  }
+  if (!argv) return unavailable("no telos command configured (set LEARN_TELOS_CMD)");
+  let res;
+  try {
+    res = await runPeer(argv, ["render", resolve(specPath)]);
+  } catch (err) {
+    return unavailable(refusalReason("telos", err));
+  }
   let out = null; try { out = JSON.parse(res.stdout); } catch {}
   if (!out || typeof out !== "object") return { ran: true, verdict: "UNVERIFIABLE", failure: "bad-render-output", provenance: "aid", code: res.status ?? null, stdout: (res.stdout || "").slice(0, 400) };
   return {
