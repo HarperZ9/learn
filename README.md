@@ -215,7 +215,7 @@ file. The MCP surface never performs a real course action or answers a graded st
 
 ## Status
 
-- **Release:** `2.0.0`; commands `learn` and `learn-mcp`; Node >= 20; zero external dependencies
+- **Release:** `2.1.0` candidate (unpublished); published baseline `2.0.0`; commands `learn` and `learn-mcp`; Node >= 20; zero external dependencies
   (ES modules, `node:test`).
 - **CLI surface:** `learn status`, `learn doctor`, `learn mcp`, `learn run/resume/verify/receipt`,
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
@@ -294,4 +294,13 @@ The long form of this belief: [The Unbundling](https://github.com/HarperZ9/flywh
 
 ---
 
-**[Zentropy Labs](https://github.com/ZentropyLabs-ai)** · order out of entropy. An independent lab building evidence-first tools that leave a re-checkable artifact behind. Built by Zain Dana Harper in Seattle. The full workbench is at [Project Telos](https://harperz9.github.io).
+**[Zentropy Labs](https://github.com/ZentropyLabs-ai)** Ã‚Â· order out of entropy. An independent lab building evidence-first tools that leave a re-checkable artifact behind. Built by Zain Dana Harper in Seattle. The full workbench is at [Project Telos](https://harperz9.github.io).
+
+## Local client packages
+
+The 2.1.0 source candidate includes native Windows client packages. Publication
+and marketplace acceptance remain separate release gates.
+
+### Installation
+
+See [the client package guide](client-plugin/README.md) for scoped skills, portable MCP configuration and same-release archives.
