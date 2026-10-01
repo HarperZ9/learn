@@ -44,6 +44,35 @@ export const TOOLS = [
   { name: "learn_tutor_prooflesson", description: "Advisory, read-only: derive a lesson from a proof packet (source refs, claim, verdict, explanation scaffold, retrieval questions, verifier binding) plus a typed misconception record for DRIFT/UNVERIFIABLE packets. The lesson verdict always equals the packet verdict; a forged verdict enum is rejected; nothing is written. Pass the packet inline as `packet`, or `packetPath` naming a JSON file inside the learn state folder.", inputSchema: { type: "object", properties: { packet: { type: "object" }, packetPath: { type: "string" } } } },
 ];
 
+// MCP tool annotations. A hint describes the tool to the client and grants
+// nothing. Only the two tutor writers change files, and only inside the learn
+// state folder; tutor_plan can replace a session when asked to.
+const hints = (title, { readOnly = true, destructive = false, idempotent = true } = {}) => ({
+  title, readOnlyHint: readOnly, destructiveHint: destructive, idempotentHint: idempotent, openWorldHint: false,
+});
+export const TOOL_ANNOTATIONS = {
+  learn_doctor: hints("Learn integrity check"),
+  learn_status: hints("Learn status"),
+  learn_verify: hints("Verify a run ledger"),
+  learn_receipt: hints("Credential provenance receipt"),
+  learn_dry_run: hints("Preview a workflow"),
+  learn_tutor_plan: hints("Create a study session", { readOnly: false, destructive: true, idempotent: false }),
+  learn_tutor_record: hints("Record a practice answer", { readOnly: false, idempotent: false }),
+  learn_tutor_mastery: hints("Check the mastery gate"),
+  learn_visualize_dry_run: hints("Preview a concept render request"),
+  learn_tutor_due: hints("List reviews that are due"),
+  learn_tutor_studyplan: hints("Build a study plan"),
+  learn_tutor_misconceptions: hints("Rank misconceptions"),
+  learn_tutor_reverify: hints("Re-verify tutor receipts"),
+  learn_tutor_derive_schedule: hints("Re-derive the review schedule"),
+  learn_tutor_prooflesson: hints("Derive a lesson from a proof"),
+};
+for (const tool of TOOLS) {
+  tool.title = TOOL_ANNOTATIONS[tool.name].title;
+  tool.annotations = { ...TOOL_ANNOTATIONS[tool.name] };
+}
+
+
 function argsObject(args) {
   if (args === undefined || args === null) return {};
   if (typeof args !== "object" || Array.isArray(args)) throw invalid("arguments must be a JSON object");

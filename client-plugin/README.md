@@ -1,5 +1,15 @@
 # Learn local client package
 
+Learn plans study sessions, records your own practice answers and tells you what to review next. It stops at graded work and never answers an assessment for you.
+
+## Try it
+
+- Create a study session for linear algebra with three objectives.
+- Record my practice answer for the eigenvalues objective as incorrect.
+- Which objectives are due for review today?
+
+## Details
+
 The source ZIP includes the tool source and one scoped skill. It requires an
 installed Node.js 20+; this advanced source package is not self-contained.
 Extract it to a persistent folder. Claude Code can load that plugin folder;
