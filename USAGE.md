@@ -123,3 +123,10 @@ means something in the accountability spine (gate, ledger, mastery independence)
 Renders and cited sources are learning aids. The tutor's `mastery()` verdict is a function of your
 own scored practice attempts only. If you can get any command to cross that line, that is the most
 useful bug report this tool can receive.
+
+## Local client packages
+
+See [the client package guide](client-plugin/README.md) for scoped skills, portable MCP configuration and same-release archives.
+
+The current source candidate targets 2.1.0. Registry install examples above
+continue to name the published baseline until release qualification finishes.

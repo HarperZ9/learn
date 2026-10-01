@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+- Add Windows x64 MCPB and ZIP packages with a bundled runtime, scoped skills and qualified local stdio workflows.
+- Require clean exact-tag source, versions ending in .0, payload hashes and matching same-release artifacts; refuse changed release reruns.
+- Preserve the graded-assessment halt and CLI-only live course actuation; validate assessment outcomes rather than field-name substrings.
+
 All notable changes to `learn`. Versions follow semantic versioning; each minor release was built
 behind the `feat/learning-loop` branch and reviewed before merge.
 
@@ -140,7 +146,7 @@ file listed it under Unreleased.
   Per-item *difficulty* / *stability* / *retrievability* with a user-set retention target, so the
   scheduler decays each item on its own forgetting curve and next-selects the item you are most
   likely to have forgotten (retrievability-ranked), rather than re-surfacing whole objectives on a
-  fixed Leitner ladder. `fsrs.mjs` is pure math (no I/O, no `Date.now()` — `now` is always
+  fixed Leitner ladder. `fsrs.mjs` is pure math (no I/O, no `Date.now()` â€” `now` is always
   injected); `itemscheduler.mjs` owns the derived `session.itemState` and self-heals corrupt or
   missing state on BOTH the ranking/read path (`sortByRetrievability`/`selectNextItem`) and the
   grading/write path (`recordAttemptWithGrade` heals before grading), so a nonsensical interval can
@@ -149,8 +155,8 @@ file listed it under Unreleased.
   default-false `useFSRS` flag through `schedule.reviewState`/`due` and `study.studyPlan`/
   `studyReceipt`. Wired into the CLI (`plan --enable-fsrs`, `record --grade/--now`, `study` /
   `study-receipt` / `due --use-fsrs/--desired-retention`) and MCP (`enableFsrs`, `grade`, `now`,
-  `useFsrs`, `desiredRetention`). INTEGRITY: the mastery-gate still reads `session.attempts` only —
-  `itemState` is a scheduling hint, never a verdict — proven by `learn-fsrs-isolation.test.mjs`
+  `useFsrs`, `desiredRetention`). INTEGRITY: the mastery-gate still reads `session.attempts` only â€”
+  `itemState` is a scheduling hint, never a verdict â€” proven by `learn-fsrs-isolation.test.mjs`
   (corrupt/delete itemState, mastery and study-receipt unchanged). Fully backward compatible: all
   prior tests pass unchanged, `useFSRS` defaults false, and the flags fall back to the Leitner/
   interleave path on legacy sessions with no `itemState`.
