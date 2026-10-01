@@ -1,0 +1,14 @@
+{
+  "description": "Practice planning and evidence from your own learning attempts.",
+  "name": "learn-study",
+  "owner": {
+    "name": "Zain Dana Harper"
+  },
+  "plugins": [
+    {
+      "description": "Practice planning and evidence from your own learning attempts.",
+      "name": "learn-study",
+      "source": "./"
+    }
+  ]
+}
