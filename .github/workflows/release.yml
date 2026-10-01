@@ -152,6 +152,8 @@ jobs:
       - name: Verify native package checksums
         run: |
           cat dist/*.sha256 >> dist/SHA256SUMS
+          # A CR byte passes coreutils 9 but fails sha256sum 8.32 and shasum.
+          if grep -l $'\r' dist/SHA256SUMS; then echo 'checksum file has CR bytes'; exit 1; fi
           (cd dist && sha256sum -c SHA256SUMS)
       - name: Create the GitHub Release with the tarball and SHA256SUMS, or check the existing one
         env:
