@@ -1,6 +1,6 @@
 {
   "name": "learn-study",
-  "description": "Practice planning and evidence from your own learning attempts.",
+  "description": "Plan study sessions, record your practice answers and see what to review next.",
   "version_file": "package.json",
   "roots": [
     "src"
