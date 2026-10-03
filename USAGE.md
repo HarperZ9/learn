@@ -9,11 +9,11 @@ prove *you* know it.
 From npm (zero external dependencies):
 
 ```bash
-npm install -g @harperz9/learn@2.2.0
+npm install -g @harperz9/learn@2.3.0
 learn status
 ```
 
-Or without installing: `npx -y @harperz9/learn@2.2.0 status`. From a source checkout:
+Or without installing: `npx -y @harperz9/learn@2.3.0 status`. From a source checkout:
 
 ```bash
 git clone https://github.com/HarperZ9/learn.git
@@ -95,7 +95,7 @@ of the step it allowed. See [docs/smoke.md](docs/smoke.md) for a full live-LMS w
 ## MCP
 
 ```bash
-npx -y @harperz9/learn@2.2.0 mcp     # or `learn mcp`, `learn-mcp`, or `node src/mcp.mjs`
+npx -y @harperz9/learn@2.3.0 mcp     # or `learn mcp`, `learn-mcp`, or `node src/mcp.mjs`
 ```
 
 Serves fifteen tools over stdio JSON-RPC (`learn_doctor`, `learn_status`, `learn_verify`,
@@ -128,5 +128,5 @@ useful bug report this tool can receive.
 
 See [the client package guide](client-plugin/README.md) for scoped skills, portable MCP configuration and same-release archives.
 
-The current source version is 2.2.0, and its GitHub release carries the matching
+The current source version is 2.3.0, and its GitHub release carries the matching
 client packages.
