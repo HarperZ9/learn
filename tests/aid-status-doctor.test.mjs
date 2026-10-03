@@ -4,8 +4,8 @@ import { doctor } from "../src/doctor.mjs";
 import { status } from "../src/status.mjs";
 import { version } from "../src/index.mjs";
 
-test("version is bumped to 2.1.0", () => {
-  assert.equal(version, "2.1.0");
+test("version is bumped to 2.2.0", () => {
+  assert.equal(version, "2.2.0");
 });
 
 test("status advertises the telos render bridge and the aid invariant", () => {
