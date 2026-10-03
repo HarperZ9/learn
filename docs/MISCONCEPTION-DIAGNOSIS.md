@@ -32,6 +32,33 @@ This bar was committed before the diagnoser was written and before its author sa
 - **Control.** With each student answer moved to a different question (a seeded derangement), leaf agreement must fall below 50%. If it does not, the diagnoser is reading something other than the answer.
 - **Ship rule.** The diagnosis ships whatever the result, with the numbers below.
 
+## Try it
+
+```bash
+node src/cli.mjs tutor record mysession --objective addition --prompt "47 + 38" --answer "75" --correct false
+node src/cli.mjs tutor misconceptions mysession
+#   addition (1x):
+#     causes: misrecruited.no_carry 1
+node scripts/diagnosis-bench.mjs tests/fixtures/learn_diagnosis_labels.json
+```
+
+The MCP tool `learn_tutor_misconceptions` returns the same counts in a `diagnoses` field. Prompts the tree does not cover, such as calculus or prose questions, get no diagnosis and keep the plain count and notes.
+
 ## Results
 
-Pending the run.
+Run on 2026-10-03. 70 labelled answers, 10 per leaf, 6 marked ambiguous by the labeller.
+
+| | Leaf agreement | Top-level agreement |
+|---|---|---|
+| Test, 50 answers | 0.96 (48 of 50) | 0.96 |
+| Dev, 20 answers | 0.95 | 0.95 |
+| Control, answers moved to other questions | 0.16 | |
+
+- **D1 passes** at 0.96 against 0.80. **D2 passes** at 0.96 against 0.85.
+- **The control falls to 0.16**, under the 0.50 bound, so the diagnosis reads the answer.
+
+The two test misses show where the tree is blunt. For 1203 + 2589 the teacher called 3782 a slip; it is also exactly what dropping the carry gives, and the tree asks about carries first. For 2/5 + 1/2 the teacher called 3/10 unexplained; it is one digit from 9/10, so the tree calls it a slip. The dev miss is the same kind: for 1/4 + 1/4 the answer 1/4 is 2/8 reduced, which the teacher read as add-across; the tree matches add-across only when the fraction is written unreduced, so it called a one-digit slip.
+
+## Limits
+
+The labels come from one labeller, a Claude subagent that saw only this tree, and it wrote the answers as well as the labels. Real students make errors outside the tree, and those land in `missing.unexplained`. The tree covers whole-number addition, subtraction and multiplication and fraction addition only.

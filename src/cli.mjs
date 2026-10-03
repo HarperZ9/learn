@@ -95,7 +95,8 @@ async function command(argv, { dir: given } = {}) {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
       const { misconceptions } = await import("./tutor/misconception.mjs");
       const list = misconceptions(s);
-      return { code: 0, out: `tutor misconceptions ${id}: ${list.length} objective(s)\n` + list.map((m) => `  ${m.objective} (${m.count}x): ${m.notes.join("; ")}`).join("\n") };
+      return { code: 0, out: `tutor misconceptions ${id}: ${list.length} objective(s)\n` + list.map((m) => `  ${m.objective} (${m.count}x): ${m.notes.join("; ")}` +
+        (m.diagnoses ? `\n    causes: ${Object.entries(m.diagnoses).map(([k, v]) => `${k} ${v}`).join(", ")}` : "")).join("\n") };
     }
     if (sub === "retrieval") {
       const s = loadSession(dir, id); if (!s) return { code: 1, out: `no tutor session: ${id}` };
