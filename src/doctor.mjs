@@ -15,6 +15,7 @@ import { reverifySelfCheck } from "./tutor/reverify.mjs";
 import { proofLessonSelfCheck } from "./tutor/prooflessonverify.mjs";
 import { newSessionWithFSRS, recordAttemptWithGrade } from "./tutor/tutor.mjs";
 import { deriveScheduleReceipt } from "./tutor/fsrsderive.mjs";
+import { choiceSelfCheck } from "./tutor/choice.mjs";
 
 export async function doctor() {
   const checks = [];
@@ -95,6 +96,10 @@ export async function doctor() {
   fs.itemState.x.stability = 99999; // tamper the cached hint
   const tamperedVerdict = deriveScheduleReceipt(fs).verdict;
   add("tutor.schedule_rederivable_from_log", cleanVerdict === "MATCH" && tamperedVerdict === "DRIFT");
+
+  // 11. a choice item's diagnosis names the misconception behind a wrong choice and never the
+  // keyed answer, and an item whose misconception is keyed on the answer itself is rejected.
+  add("tutor.choice_diagnosis_never_reveals_key", choiceSelfCheck());
 
   const ok = checks.every((c) => c.status === "MATCH");
   return { tool: "learn", version, status: ok ? "MATCH" : "DEGRADED", checks };

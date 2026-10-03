@@ -41,6 +41,12 @@ yours. Zero external dependencies, Node 20 or newer.
   not before.
 - **Misconception targeting.** Your wrong attempts and your own feedback are aggregated per
   objective, ranked by count, so the next session spends time where it is actually needed.
+- **Choice items with named misconceptions.** A short recall question keys one answer and names
+  the misconception behind each wrong choice. A wrong attempt is told which misconception it
+  matches, never the keyed answer. Format and rules: `docs/CHOICE-ITEMS.md`.
+- **Runs in a browser.** `@harperz9/learn/browser` exports the practice, scheduling and diagnosis
+  functions with no Node built-ins, so a static page can import them with no bundler. Receipts,
+  the session store, the CLI and the MCP server stay Node-only.
 - **Predict-then-observe.** Record a prediction before you see a rendered aid or worked example,
   then score it against what happened. A pending prediction is never silently counted correct.
 - **Self-explanation with a real check.** Your explanation of a concept is bucketed into grounded,
@@ -221,7 +227,7 @@ file. The MCP surface never performs a real course action or answers a graded st
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 406 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
+- **Tests:** 419 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
   points and security fixtures, including a falsifiable test per integrity invariant. `learn
   doctor` re-checks the invariants at runtime and must report `MATCH` on every line.
 - **History:** [CHANGELOG.md](CHANGELOG.md).

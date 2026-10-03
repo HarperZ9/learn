@@ -21,7 +21,9 @@ export function misconceptions(session) {
     const entry = byObjective.get(a.objective) || { objective: a.objective, count: 0, notes: [] };
     entry.count += 1;
     entry.notes.push(a.feedback || "");
-    const { leaf } = diagnose({ prompt: a.prompt, answer: a.answer });
+    // A choice item records its diagnosis leaf on the attempt (choice.mjs); an arithmetic prompt
+    // is diagnosed here from the prompt and answer.
+    const leaf = a.misconception || diagnose({ prompt: a.prompt, answer: a.answer }).leaf;
     if (leaf) {
       entry.diagnoses = entry.diagnoses || {};
       entry.diagnoses[leaf] = (entry.diagnoses[leaf] || 0) + 1;
