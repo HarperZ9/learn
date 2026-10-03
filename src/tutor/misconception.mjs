@@ -5,10 +5,14 @@
 // nothing more than what the operator already saw during practice, ranked so the next study
 // session can prioritize the objective the operator struggles with most.
 
-// misconceptions(session) -> [{objective, count, notes:[feedback...]}]
+import { diagnose } from "./diagnose.mjs";
+
+// misconceptions(session) -> [{objective, count, notes:[feedback...], diagnoses?}]
 // Aggregates WRONG attempts (correct === false) per objective, in recorded order, ranked by
 // count descending (most-misunderstood objective first). Objectives with zero wrong attempts do
-// not appear at all.
+// not appear at all. When a wrong attempt is an arithmetic question the diagnosis tree covers
+// (docs/MISCONCEPTION-DIAGNOSIS.md), `diagnoses` counts the causes, e.g. {"slip.one_digit": 2}.
+// The field is absent when no attempt for that objective could be diagnosed.
 export function misconceptions(session) {
   const byObjective = new Map();
 
@@ -17,6 +21,11 @@ export function misconceptions(session) {
     const entry = byObjective.get(a.objective) || { objective: a.objective, count: 0, notes: [] };
     entry.count += 1;
     entry.notes.push(a.feedback || "");
+    const { leaf } = diagnose({ prompt: a.prompt, answer: a.answer });
+    if (leaf) {
+      entry.diagnoses = entry.diagnoses || {};
+      entry.diagnoses[leaf] = (entry.diagnoses[leaf] || 0) + 1;
+    }
     byObjective.set(a.objective, entry);
   }
 
