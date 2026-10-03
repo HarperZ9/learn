@@ -13,7 +13,8 @@
   "exports": {
     ".": "./src/index.mjs",
     "./doctor": "./src/doctor.mjs",
-    "./status": "./src/status.mjs"
+    "./status": "./src/status.mjs",
+    "./browser": "./src/browser.mjs"
   },
   "scripts": { "test": "node --test" },
   "publishConfig": { "access": "public" },
