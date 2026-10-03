@@ -18,7 +18,9 @@ const read = (rel) => readFileSync(join(ROOT, rel), "utf8");
 
 function changelogSection(text, version) {
   const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => l.trim() === `## ${version}`);
+  // A heading may carry a date after the version: "## 2.2.0" or "## 2.2.0, 2026-10-03".
+  const heading = new RegExp(`^## ${version.replace(/\./g, "\\.")}(?:[ ,(]|$)`);
+  const start = lines.findIndex((l) => heading.test(l.trim()));
   if (start < 0) return null;
   let end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
   if (end < 0) end = lines.length;

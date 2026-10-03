@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.0, 2026-10-03
 
 - Misconception diagnosis for arithmetic practice. A wrong answer to a whole-number or fraction-addition prompt walks a fixed tree of yes-or-no questions and gets a cause, such as `misrecruited.no_carry` or `slip.one_digit`. `tutor misconceptions` and `learn_tutor_misconceptions` now count causes per objective in a `diagnoses` field. The diagnosis never shows the correct answer. On 50 held-out teacher-labelled answers it agreed with the teacher on 96%; details in `docs/MISCONCEPTION-DIAGNOSIS.md`.
 
