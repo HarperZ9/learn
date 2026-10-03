@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.3.0, 2026-10-03
 
 - Choice items (`learn-choice/1`, `src/tutor/choice.mjs`). A recall question keys one answer and names the misconception behind each wrong choice. `diagnoseChoice()` tells a wrong attempt which misconception it matches, using the same top levels as the arithmetic tree, and never returns the keyed answer. `doctor` checks that with a probe and a known-bad item.
 - A browser entry, `@harperz9/learn/browser` (`src/browser.mjs`). Practice, scheduling and diagnosis load in a page with no bundler. The session functions moved from `tutor.mjs` into `session.mjs`, which has no Node built-ins; `tutor.mjs` re-exports them unchanged. A test walks the entry's import graph and fails on any `node:` or bare import.

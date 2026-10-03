@@ -77,11 +77,11 @@ yours. Zero external dependencies, Node 20 or newer.
 ## Install
 
 ```bash
-npm install -g @harperz9/learn@2.2.0
+npm install -g @harperz9/learn@2.3.0
 learn status
 ```
 
-Or run it without installing: `npx -y @harperz9/learn@2.2.0 status`. From a clone:
+Or run it without installing: `npx -y @harperz9/learn@2.3.0 status`. From a clone:
 
 ```bash
 git clone https://github.com/HarperZ9/learn.git
@@ -205,7 +205,7 @@ just that something was.
 ## MCP server
 
 ```bash
-npx -y @harperz9/learn@2.2.0 mcp     # or `learn mcp`, or the `learn-mcp` bin
+npx -y @harperz9/learn@2.3.0 mcp     # or `learn mcp`, or the `learn-mcp` bin
 ```
 
 Serves fifteen tools over stdio JSON-RPC: `learn_doctor`, `learn_status`, `learn_verify`,
@@ -221,7 +221,7 @@ file. The MCP surface never performs a real course action or answers a graded st
 
 ## Status
 
-- **Release:** `2.2.0` on npm as `@harperz9/learn`; commands `learn` and `learn-mcp`; Node >= 20; zero external dependencies
+- **Release:** `2.3.0` on npm as `@harperz9/learn`; commands `learn` and `learn-mcp`; Node >= 20; zero external dependencies
   (ES modules, `node:test`).
 - **CLI surface:** `learn status`, `learn doctor`, `learn mcp`, `learn run/resume/verify/receipt`,
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
@@ -304,7 +304,7 @@ Built by **[Zain Dana Harper](https://harperz9.github.io)** in Seattle: evidence
 
 ## Local client packages
 
-The 2.2.0 GitHub release includes native Windows client packages. Marketplace
+The 2.3.0 GitHub release includes native Windows client packages. Marketplace
 acceptance remains a separate gate.
 
 ### Installation
