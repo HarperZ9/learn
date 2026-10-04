@@ -62,32 +62,39 @@ test("docs/ENTERPRISE-READINESS.md aligns with Project Telos context envelopes a
 test("flagship brand assets exist and are referenced from README", () => {
   const readme = read("README.md");
   for (const rel of [
-    "docs/brand/learn-hero.svg",
-    "docs/brand/learn-mark.svg",
-    "docs/brand/learn-hero.png",
+    "docs/art/hero-light.svg",
+    "docs/art/hero-dark.svg",
+    "docs/brand/mark-tile.svg",
+    "docs/art/social.png",
     "docs/brand/README.md",
   ]) {
     assert.ok(exists(rel), `missing ${rel}`);
   }
-  assert.match(readme, /docs\/brand\/learn-hero\.png/);
+  assert.match(readme, /docs\/art\/hero-light\.svg/);
+  assert.match(readme, /docs\/art\/hero-dark\.svg/);
 });
 
-test("brand hero SVG is accessible and on-brand (iris accent, title/desc)", () => {
-  const hero = read("docs/brand/learn-hero.svg");
-  assert.match(hero, /<title/);
-  assert.match(hero, /<desc/);
-  assert.match(hero, /role="img"/);
-  assert.match(hero, /#3a2bd6/i);
-  assert.match(hero, /viewBox="0 0 1280 520"/);
+// 4 October 2026: the brand moved to the shared art direction. The hero and the mark sit on the
+// site's grounds (bone #f1ece1 for light, void #040405 for dark), and the iris accent is retired:
+// colour is reserved for verdicts and the spectrum for the art's one flare.
+test("brand hero SVG is accessible and on-brand (shared grounds, title/desc)", () => {
+  for (const [rel, ground] of [["docs/art/hero-light.svg", /#f1ece1/i], ["docs/art/hero-dark.svg", /#040405/i]]) {
+    const hero = read(rel);
+    assert.match(hero, /<title>[^<]+<\/title><desc>[^<]+<\/desc>/);
+    assert.match(hero, /role="img"/);
+    assert.match(hero, ground);
+    assert.doesNotMatch(hero, /#3a2bd6/i);
+    assert.match(hero, /viewBox="0 0 1280 480"/);
+  }
 });
 
-test("brand mark SVG is accessible and on-brand (iris accent, title/desc)", () => {
-  const mark = read("docs/brand/learn-mark.svg");
-  assert.match(mark, /<title/);
-  assert.match(mark, /<desc/);
+test("brand mark SVG is accessible and on-brand (shared grounds, title/desc)", () => {
+  const mark = read("docs/brand/mark-tile.svg");
+  assert.match(mark, /<title>[^<]+<\/title><desc>[^<]+<\/desc>/);
   assert.match(mark, /role="img"/);
-  assert.match(mark, /#3a2bd6/i);
-  assert.match(mark, /viewBox="0 0 520 440"/);
+  assert.match(mark, /#040405/i);
+  assert.doesNotMatch(mark, /#3a2bd6/i);
+  assert.match(mark, /viewBox="0 0 512 512"/);
 });
 
 test("docs/brand/README.md carries a provenance note (what rendered it, accessibility floor)", () => {
