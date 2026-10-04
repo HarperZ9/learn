@@ -1,12 +1,20 @@
-<p align="center"><img src="docs/art/learn-header.svg" alt="learn: a runnable course, and graded work that never leaves your hands." width="100%"></p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/learn/main/docs/art/hero-dark.svg">
+  <img src="https://raw.githubusercontent.com/HarperZ9/learn/main/docs/art/hero-light.svg" alt="learn: Turn your own material into a runnable course with spaced repetition. 7 wavering traces run from the left and narrow into a bright core over a row of tick marks." width="100%">
+</picture>
 
-**Your own material, a runnable course: spaced repetition, retrieval practice, real grading, zero dependencies.**
+# learn
 
-[![npm](https://img.shields.io/npm/v/%40harperz9%2Flearn?style=flat-square&labelColor=14041b&color=ff35aa)](https://www.npmjs.com/package/@harperz9/learn)
+Turn your own material into a runnable course with spaced repetition.
+
+```
+npm install -g @harperz9/learn@2.3.0
+```
+
+[![version: 2.3.0](https://img.shields.io/badge/version-2.3.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://www.npmjs.com/package/@harperz9/learn)
 [![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/learn/actions/workflows/ci.yml)
-![node: >=20](https://img.shields.io/badge/node-%3E%3D20-blue?style=flat-square&labelColor=14041b)
-![deps: none](https://img.shields.io/badge/deps-none-success?style=flat-square&labelColor=14041b)
-![license: Fair Source](https://img.shields.io/badge/license-Fair%20Source-8f8095?style=flat-square&labelColor=14041b)
+[![license](https://img.shields.io/badge/license-Fair_Source-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/learn/blob/main/LICENSE)
+![node 20+](https://img.shields.io/badge/node-20%2B-e6e1d6?style=flat-square&labelColor=1a1712)
 
 [Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [learn](https://github.com/HarperZ9/learn) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
 
