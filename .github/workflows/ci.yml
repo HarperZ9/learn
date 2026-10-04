@@ -43,3 +43,9 @@ jobs:
           mkdir -p packed
           npm pack --pack-destination packed
           node scripts/smoke-tarball.mjs packed/harperz9-learn-"$(node -p "require('./package.json').version")".tgz
+  art-receipts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify art receipt digests
+        run: python3 scripts/check_art_receipts.py
