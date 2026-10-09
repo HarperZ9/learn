@@ -88,6 +88,44 @@ The [animated explainer](https://harperz9.github.io/repo-explainers/learn.html)
 walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery gate, a receipt that re-derives its verdict under two kinds of tampering, and the course workflow halting at its graded step. Every value on it is output from this repository. Its
 source is [docs/explainer/index.html](docs/explainer/index.html).
 
+## Watch
+
+No concept film fits this tool closely yet. The walkthrough below covers it in text, with real commands and output.
+
+Video walkthrough: coming with the next release.
+
+## Walkthrough
+
+Install it, run it once, then use the main feature. Each command below is real, and so is its output.
+
+1. **Install.** Install with npm. Node 20 or newer.
+
+   ```text
+   $ npm install -g @harperz9/learn@2.3.0
+   ```
+
+2. **First run: plan a session.** Name a topic and the objectives you want to master.
+
+   ```text
+   $ learn tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
+   tutor plan mysession: 2 objective(s)
+   ```
+
+3. **Record what you answered.** Record each attempt with your own answer and whether it was right.
+
+   ```text
+   $ learn tutor record mysession --objective power-rule --prompt "d/dx x^3" --answer "3x^2" --correct true
+   tutor record mysession: 1 practice attempt(s)
+   ```
+
+4. **Ask what to study next.** Learn schedules review from your attempts and names what is due.
+
+   ```text
+   $ learn tutor study mysession --now 2026-06-30T00:00:00Z
+   tutor study mysession: 1 due, 0 misconception(s), mastery not yet
+     due: chain-rule
+   ```
+
 ## Install
 
 ```bash
