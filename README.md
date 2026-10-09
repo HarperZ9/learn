@@ -82,6 +82,12 @@ yours. Zero external dependencies, Node 20 or newer.
   thirteen read-only, and two (`learn_tutor_plan`, `learn_tutor_record`) that write session files
   in your learn state folder. Actuation stays on the CLI.
 
+## See it work, step by step
+
+The [animated explainer](https://harperz9.github.io/repo-explainers/learn.html)
+walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery gate, a receipt that re-derives its verdict under two kinds of tampering, and the course workflow halting at its graded step. Every value on it is output from this repository. Its
+source is [docs/explainer/index.html](docs/explainer/index.html).
+
 ## Install
 
 ```bash
