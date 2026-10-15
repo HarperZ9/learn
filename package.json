@@ -2,7 +2,7 @@
   "name": "@harperz9/learn",
   "version": "2.3.0",
   "type": "module",
-  "description": "Accountable credential & coursework engine — automates course logistics, halts at every graded step for the human, and emits a tamper-evident receipt of how a credential was earned. Learning aid, not a bypass.",
+  "description": "Coursework engine that automates course logistics, stops at every graded step for the human, and emits a tamper-evident receipt of how a credential was earned.",
   "license": "LicenseRef-fair-source",
   "author": "Zain Dana Harper (github.com/HarperZ9)",
   "repository": { "type": "git", "url": "git+https://github.com/HarperZ9/learn.git" },
