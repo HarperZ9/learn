@@ -88,12 +88,6 @@ The [animated explainer](https://harperz9.github.io/repo-explainers/learn.html)
 walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery gate, a receipt that re-derives its verdict under two kinds of tampering, and the course workflow halting at its graded step. Every value on it is output from this repository. Its
 source is [docs/explainer/index.html](docs/explainer/index.html).
 
-## Watch
-
-No concept film fits this tool closely yet. The walkthrough below covers it in text, with real commands and output.
-
-Video walkthrough: coming with the next release.
-
 ## Walkthrough
 
 Install it, run it once, then use the main feature. Each command below is real, and so is its output.
