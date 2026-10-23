@@ -182,7 +182,7 @@ async function command(argv, { dir: given } = {}) {
       const r = deriveScheduleReceipt(s, { optimize: has(argv, "--optimize") });
       writeSessionFile(dir, id, ".derive-schedule.json", JSON.stringify(r, null, 2));
       const drift = r.perObjective.filter((p) => !p.match).map((p) => p.objective);
-      const driftNote = drift.length ? `\n  DRIFT on: ${drift.join(", ")} (cached hint disagrees with the witnessed log; the log is authoritative)` : "";
+      const driftNote = drift.length ? `\n  DRIFT on: ${drift.join(", ")} (the cached hint differs from the recorded log; learn uses the log)` : "";
       return {
         code: r.verdict === "DRIFT" ? 1 : 0,
         out: `tutor derive-schedule ${id}: verdict ${r.verdict}, re-derived ${r.fsrsAttempts} graded attempt(s), ledger ${r.ledgerVerified ? "verified" : "BROKEN"} -> tutor/${id}.derive-schedule.json${driftNote}`,

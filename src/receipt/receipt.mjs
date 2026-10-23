@@ -32,7 +32,7 @@ table{border-collapse:collapse;width:100%;margin:1rem 0}td,th{border:1px solid #
  &nbsp;·&nbsp; Aid visualizations: <b>${aidVisualizations.length}</b>
  &nbsp;·&nbsp; Certificate: <b>${esc(certId ?? "(none)")}</b></p>
 ${humanAssessments.length ? `<table><tr><th>seq</th><th>graded step performed by the operator</th><th>at</th></tr>${humanAssessments.map((h) => `<tr><td>${esc(h.seq)}</td><td>${esc(h.note)}</td><td>${esc(h.at)}</td></tr>`).join("")}</table>` : ""}
-<p class="note">This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the hash-chain above is independently re-verifiable. Print this page to PDF for a shareable copy.</p>`;
+<p class="note">The operator did the graded work for this credential. The engine ran the logistics and recorded every step. Run <code>learn verify</code> on this run to re-check the hash chain. Print this page to PDF for a shareable copy.</p>`;
   const markdown = [
     `# Credential receipt — ${workflow.course}`,
     ``,
@@ -42,10 +42,10 @@ ${humanAssessments.length ? `<table><tr><th>seq</th><th>graded step performed by
     `- Human assessment steps (performed by the operator): **${humanAssessments.length}**`,
     ...humanAssessments.map((h) => `  - seq ${h.seq}: ${h.note} (${h.at})`),
     `- Certificate: ${certId ?? "(none captured)"}`,
-    `- Aid visualizations (learning aids — never graded work): **${aidVisualizations.length}**`,
+    `- Aid visualizations (learning aids, kept apart from graded work): **${aidVisualizations.length}**`,
     ...aidVisualizations.map((v) => `  - ${v.concept ?? "(concept)"}: ${v.verdict} (${v.selected_profile ?? "n/a"})`),
     ``,
-    `This credential's graded work was performed by the operator. The engine automated logistics and witnessed every step; the chain above is re-verifiable.`,
+    `The operator did the graded work for this credential. The engine ran the logistics and recorded every step. Run \`learn verify\` on this run to re-check the chain.`,
   ].join("\n");
   return { json, markdown, html };
 }
