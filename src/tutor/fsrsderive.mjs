@@ -162,7 +162,7 @@ export function deriveScheduleReceipt(session, { optimize = false } = {}) {
     perObjective,
     ledgerVerified: ledger.verify().ok,
     entries: ledger.entries(),
-    boundary: "Scheduling audit only: re-derives the FSRS hint from the witnessed graded log; it never grades, never appends attempts, and never moves the mastery gate.",
+    boundary: "Scheduling audit: re-derives the FSRS hint from the recorded graded log. It reads the log only; grades, attempts and the mastery gate stay as they are.",
   };
 
   if (optimize) {
