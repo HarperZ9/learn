@@ -27,17 +27,17 @@ npx -y @harperz9/learn@2.3.0 tutor plan mysession --topic "derivatives" --object
   count, used to steer the next plan toward where you are weak.
 - **Study plan.** `tutor study` composes due items, misconceptions, an interleaved practice
   order, prerequisite readiness, and the mastery verdict into one plan.
-- **Mastery gate.** `tutor mastery` derives a ready/not-yet verdict per objective from your
-  scored attempts only. Renders, visualizations, schedules, and pending predictions never move it.
+- **Mastery gate.** `tutor mastery` derives a readiness verdict per objective from your
+  scored attempts, the gate's one input. Renders, schedules and predictions awaiting a score leave it as it is.
 - **Receipt.** `tutor study-receipt` emits a witnessed, hash-chained record of the session.
   `tutor reverify` recomputes that record's own evidence: the chain must recompute and the
-  verdict must re-derive, with typed failures (`CHAIN_BROKEN`, `VERDICT_MISMATCH`) and
-  `UNVERIFIED` for chainless receipts.
+  verdict must re-derive. Failures are typed (`CHAIN_BROKEN`, `VERDICT_MISMATCH`), and a chainless
+  receipt reports `UNVERIFIED`.
 - **Workflow.** For the credential engine: a declarative JSON list of steps (`navigate`, `click`,
   `fill`, `waitFor`, `capture`, `submit`, `assess`, `complete`). `learn run` executes it and
-  halts at every `assess` step, at sensitive fills (credentials, payment details, CAPTCHA), at
-  `submit` steps unless you authorized witnessed automated submission, and at steps flagged
-  `cost` or `irreversible` unless you pass `--allow-cost`.
+  halts and waits for you at every `assess` step and at sensitive fills (credentials, payment
+  details, CAPTCHA). It also halts at `submit` steps until you authorize witnessed automated
+  submission, and at steps flagged `cost` or `irreversible` until you pass `--allow-cost`.
 
 ## Your first ten minutes
 
@@ -87,7 +87,7 @@ node src/cli.mjs tutor reverify mysession
 ```
 
 Optionally, run the credential engine against the bundled example and watch it halt at the graded
-step with nothing actuated past it:
+step, step 4, and wait for you:
 
 ```bash
 node src/cli.mjs run examples/course.json --id run1
@@ -104,7 +104,7 @@ node src/cli.mjs resume run1 --attest "completed Quiz 1 myself"
 - [ENTERPRISE-READINESS.md](ENTERPRISE-READINESS.md): using `learn` inside unattended agent
   workflows with context envelopes and action receipts.
 - [smoke.md](smoke.md): an operator-run smoke test against a live LMS.
-- The README's feature list, for capabilities not walked through here: proof-packet lessons
+- The README's feature list covers the rest: proof-packet lessons
   (`tutor prooflesson`), self-explanation (`tutor explain`), predictions (`tutor predict` /
   `tutor score`), and the assist pillar (`learn assist`) that flags claims to verify in your own
-  draft and authors nothing.
+  draft and leaves the writing to you.
