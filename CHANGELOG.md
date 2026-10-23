@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- README: the opening now says what learn does and who it is for, with an install and first run checked against the 2.3.0 package, a comparison with Anki, Mochi, RemNote and SuperMemo, and a list of limits. The npm description, author email and keywords match it.
+- README and docs introduction rewritten to open with what learn does and a command to run, with
+  a shorter feature list and a short "Things to know" section. The npm description matches.
 
 ## 2.3.0, 2026-10-03
 
