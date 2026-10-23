@@ -3,7 +3,7 @@
   "version": "2.3.0",
   "type": "module",
   "description": "Study planner for the terminal and MCP: schedules reviews, tracks mistakes and gates mastery from your own recorded attempts, with re-checkable receipts. Never answers a graded question.",
-  "license": "LicenseRef-fair-source",
+  "license": "AGPL-3.0-only",
   "author": "Zain Dana Harper <zaindharper@gmail.com> (https://github.com/HarperZ9)",
   "repository": { "type": "git", "url": "git+https://github.com/HarperZ9/learn.git" },
   "homepage": "https://github.com/HarperZ9/learn#readme",
