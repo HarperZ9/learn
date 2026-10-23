@@ -7,24 +7,108 @@
 
 Turn your own material into a runnable course with spaced repetition.
 
-```
+`learn` is a command-line study planner and a Node.js library. You name the objectives you are
+working toward and record each practice attempt you make. learn then tells you what is due for
+review, which mistakes keep coming back, what order to practise in, and whether you have reached
+mastery on each objective. Every plan and verdict comes from your own recorded attempts, and a
+receipt lets anyone re-derive the verdict later.
+
+It is for people studying for a course, an exam or a certification who are happy working in a
+terminal, and for developers who want an agent to plan study sessions over MCP without that agent
+ever answering a graded question for the learner. A second engine automates course logistics,
+such as opening modules and moving between pages, and always stops at a graded step so the work
+stays yours.
+
+Node 20 or newer. No dependencies. Version 2.3.0 on npm, under a Fair Source licence (see
+[License](#license)).
+
+## Install and first run
+
+```bash
 npm install -g @harperz9/learn@2.3.0
 ```
 
-[![version: 2.3.0](https://img.shields.io/badge/version-2.3.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://www.npmjs.com/package/@harperz9/learn)
-[![CI](https://github.com/HarperZ9/learn/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/learn/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-Fair_Source-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/learn/blob/main/LICENSE)
-![node 20+](https://img.shields.io/badge/node-20%2B-e6e1d6?style=flat-square&labelColor=1a1712)
+Plan a session, record one attempt, and ask what to study next:
 
-[Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [learn](https://github.com/HarperZ9/learn) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
+```text
+$ learn tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
+tutor plan mysession: 2 objective(s)
 
-`learn` turns whatever you are studying, a course, a certification, or your own notes, into a
-runnable learning loop. Spaced repetition schedules your reviews, retrieval practice builds cloze
-prompts from your own drafts, misconception tracking spends your next session where you are
-actually weak, and a concept map gates readiness on prerequisites. One command, `learn tutor
-study`, composes all of it into a single plan from your recorded attempts. A second engine
-automates course and certification logistics while halting at every graded step so the work is
-yours. Zero external dependencies, Node 20 or newer.
+$ learn tutor record mysession --objective power-rule --prompt "d/dx x^3" --answer "3x^2" --correct true
+tutor record mysession: 1 practice attempt(s)
+
+$ learn tutor study mysession --now 2026-06-30T00:00:00Z
+tutor study mysession: 1 due, 0 misconception(s), mastery not yet
+  due: chain-rule
+  order: power-rule, chain-rule
+  readiness: power-rule:unlocked, chain-rule:unlocked
+```
+
+Record a wrong answer with a note on what went wrong, then write a receipt and check it:
+
+```text
+$ learn tutor record mysession --objective chain-rule --prompt "d/dx sin(x^2)" --answer "cos(x^2)" --correct false --feedback "forgot inner derivative"
+tutor record mysession: 2 practice attempt(s)
+
+$ learn tutor misconceptions mysession
+tutor misconceptions mysession: 1 objective(s)
+  chain-rule (1x): forgot inner derivative
+
+$ learn tutor study-receipt mysession --now 2026-06-30T00:00:00Z
+tutor study-receipt mysession: verified true, mastery not yet -> tutor/mysession.study-receipt.json
+
+$ learn tutor reverify mysession
+tutor reverify mysession: VERIFIED (1 receipt(s))
+```
+
+`--now` pins the clock so these outputs repeat exactly; leave it out to use the current time.
+To try it without installing, prefix any command with `npx -y @harperz9/learn@2.3.0` in place
+of `learn`. `learn doctor` re-runs the integrity checks and prints `MATCH` on every line.
+
+From a clone, the same commands run as `node src/cli.mjs`, and the examples in `examples/` (which
+the npm package does not include) work as written:
+
+```bash
+git clone https://github.com/HarperZ9/learn.git
+cd learn
+node --test
+```
+
+### Where learn keeps your data
+
+Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` when you set it,
+otherwise `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
+`$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints the folder under
+`state`. Pass `--dir <folder>` to keep a project's sessions in a folder beside the project. Session
+and run ids use letters, digits and the characters `.`, `_` and `-` (up to 64, no leading `.` or `-`), and no
+file is ever written outside the state folder. Delete a session by deleting its files there.
+
+## How it compares
+
+Anki, Mochi, RemNote and SuperMemo are flashcard and note apps. They give you a card editor,
+media, sync across devices and a review screen, and Anki ships the FSRS scheduler. learn has none
+of that. It works on objectives and on attempts you record from the command line or an agent, and
+it adds what card apps leave out: misconception counts per objective, a mastery gate that reads
+only your own graded attempts, prerequisite ordering, and receipts that re-derive their verdict
+from a hash-chained log. Use a card app to drill a deck; use learn when you want a scriptable plan
+and a checkable record of how you got to ready.
+
+## Limits
+
+- No card editor, no sync and no mobile app. You record attempts yourself, by command or through
+  the MCP server.
+- The adaptive scheduler is a small FSRS-style model written for this package. It does not use
+  the reference FSRS parameters that Anki trains, and it is a scheduling hint only: it never
+  moves the mastery gate.
+- Mastery is a threshold on your recorded attempts: by default at least three attempts per
+  objective and 80% correct. It shows you passed your own prompts; it does not prove you would
+  pass the real exam.
+- Live course runs need a browser-control library that is not published, so outside the author's
+  machine the credential engine runs only with its offline test driver. The adapter pack holds no
+  graded logic and is not tested against live course sites in CI.
+- Self-explanation checking needs Crucible, a separate tool you install and point learn at. It
+  sorts the claims in your explanation into grounded, shaky and unverifiable against the sources
+  you cite; it does not judge whether your reasoning is sound.
 
 ## Features
 
@@ -48,7 +132,7 @@ yours. Zero external dependencies, Node 20 or newer.
   cloze prompts you answer from memory, each carrying its source so you check yourself after,
   not before.
 - **Misconception targeting.** Your wrong attempts and your own feedback are aggregated per
-  objective, ranked by count, so the next session spends time where it is actually needed.
+  objective, ranked by count, so the next session goes to your weakest objectives first.
 - **Choice items with named misconceptions.** A short recall question keys one answer and names
   the misconception behind each wrong choice. A wrong attempt is told which misconception it
   matches, never the keyed answer. Format and rules: `docs/CHOICE-ITEMS.md`.
@@ -58,7 +142,7 @@ yours. Zero external dependencies, Node 20 or newer.
 - **Predict-then-observe.** Record a prediction before you see a rendered aid or worked example,
   then score it against what happened. A pending prediction is never silently counted correct.
 - **Self-explanation with a real check.** Your explanation of a concept is bucketed into grounded,
-  shaky, and unverifiable claims, so "explain it back" gets a check instead of a vibe.
+  shaky, and unverifiable claims, so "explain it back" gets a checked result.
 - **Concept map with prerequisite gating.** Objectives (plain strings or `{id, text, requires}`)
   get a topological learning path; you are never told to study something whose prerequisite you
   have not passed.
@@ -88,86 +172,7 @@ The [animated explainer](https://harperz9.github.io/repo-explainers/learn.html)
 walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery gate, a receipt that re-derives its verdict under two kinds of tampering, and the course workflow halting at its graded step. Every value on it is output from this repository. Its
 source is [docs/explainer/index.html](docs/explainer/index.html).
 
-## Walkthrough
-
-Install it, run it once, then use the main feature. Each command below is real, and so is its output.
-
-1. **Install.** Install with npm. Node 20 or newer.
-
-   ```text
-   $ npm install -g @harperz9/learn@2.3.0
-   ```
-
-2. **First run: plan a session.** Name a topic and the objectives you want to master.
-
-   ```text
-   $ learn tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
-   tutor plan mysession: 2 objective(s)
-   ```
-
-3. **Record what you answered.** Record each attempt with your own answer and whether it was right.
-
-   ```text
-   $ learn tutor record mysession --objective power-rule --prompt "d/dx x^3" --answer "3x^2" --correct true
-   tutor record mysession: 1 practice attempt(s)
-   ```
-
-4. **Ask what to study next.** Learn schedules review from your attempts and names what is due.
-
-   ```text
-   $ learn tutor study mysession --now 2026-06-30T00:00:00Z
-   tutor study mysession: 1 due, 0 misconception(s), mastery not yet
-     due: chain-rule
-   ```
-
-## Install
-
-```bash
-npm install -g @harperz9/learn@2.3.0
-learn status
-```
-
-Or run it without installing: `npx -y @harperz9/learn@2.3.0 status`. From a clone:
-
-```bash
-git clone https://github.com/HarperZ9/learn.git
-cd learn
-node --test          # zero dependencies, nothing to build
-```
-
-The package exports `@harperz9/learn` (the version), `@harperz9/learn/doctor`, and
-`@harperz9/learn/status`. The examples below use `node src/cli.mjs` from a clone; with the
-package installed, `learn` takes the same arguments.
-
-### Where learn keeps your data
-
-Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` when you set it,
-otherwise `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
-`$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints the folder under
-`state`. Pass `--dir <folder>` to keep a project's sessions next to the project instead. Session
-and run ids are letters, digits, dots, underscores and hyphens (up to 64, no leading dot or hyphen), and no
-file is ever written outside the state folder. Delete a session by deleting its files there.
-
-## Quickstart
-
-```bash
-node src/cli.mjs tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
-node src/cli.mjs tutor record mysession --objective power-rule --prompt "d/dx x^3" --answer "3x^2" --correct true
-node src/cli.mjs tutor study mysession --now 2026-06-30T00:00:00Z
-node src/cli.mjs tutor mastery mysession
-```
-
-Expected output of `tutor study` after that one attempt:
-
-```
-tutor study mysession: 1 due, 0 misconception(s), mastery not yet
-  due: chain-rule
-  order: power-rule, chain-rule
-  readiness: power-rule:unlocked, chain-rule:unlocked
-```
-
-`tutor study` is the one command to run first: it composes what is due, what you keep getting
-wrong, a mixed practice order, and the mastery-gate verdict, all from your own recorded attempts.
+## Adaptive scheduling
 
 For the adaptive scheduler, create the session with `--enable-fsrs`, grade attempts 0 to 4, and
 ask for a retention-targeted plan:
@@ -201,15 +206,15 @@ node src/cli.mjs tutor reverify mysession
 # tutor reverify mysession: VERIFIED (1 receipt(s))
 ```
 
-The misconception now steers the next `tutor study` plan, and the receipt re-verifies from its own
-recorded evidence rather than a stored boolean.
+The misconception now steers the next `tutor study` plan. The receipt re-verifies by recomputing
+its own recorded evidence; a stored true/false flag counts for nothing.
 
 Here is the record that last command hands back, drawn field by field:
 
 <p align="center"><img src="docs/art/reverify-record.svg" alt="The record learn returns when it re-verifies one of its own receipts, drawn one field to a row, with what comes back in each and how a reader would check it. verdict has three readings and no fourth, and it keys off recomputed evidence rather than the receipt's own claim to be verified. failures carries a typed code: a broken hash chain names the entry it broke at, and a verdict mismatch carries the stored reading against the re-derived one. reasons is filled only when the receipt cannot be checked at all. summary.entries is the hash-chained practice log the verdict is re-derived from. summary.storedReady is the verdict as written, summary.rederivedReady is the verdict recomputed from the receipt's own attempts under its own recorded policy, and a disagreement between the two is the mismatch. witness.digest is the content address of the re-check itself." width="100%"></p>
 
 The drawing is rendered from the same spec the artwork checker reads, and the test suite holds
-every reading in it against records the re-verifier actually returns, so it cannot go quietly out
+every reading in it against records the re-verifier returns, so it cannot go quietly out
 of date.
 
 The ordering in the middle of that diagram is what makes the rest of it true. An attempt is
@@ -233,16 +238,16 @@ node src/cli.mjs receipt run1
 
 At every `assess` step it halts and waits for you, and it halts the same way at sensitive fills,
 at `submit` steps and at steps flagged `cost` or `irreversible`. When you resume, your attestation
-is recorded with its time, alongside everything the engine actually did. A resume keeps the
+is recorded with its time, alongside every step the engine performed. A resume keeps the
 submission mode the run started with; `--submit witnessed-auto` on `run` or on a resume lets the
 engine click submit, and `--allow-cost` on the invocation that reaches a cost step lets it perform
 that step. Each grant is named in the ledger entry of the step it allowed. Drivers: `FakeDriver` (offline, deterministic) and `NativeDriver` (real browser over
-native-control). An adapter pack covers Coursera, Udemy, LinkedIn Learning, edX, Credly,
+native-control, a browser-control library that is not published). An adapter pack covers Coursera, Udemy, LinkedIn Learning, edX, Credly,
 Microsoft Learn, NonprofitReady, and generic self-paced courses, with no graded logic anywhere.
-See [docs/smoke.md](docs/smoke.md) for an operator-run live-LMS walkthrough.
+See [docs/smoke.md](docs/smoke.md) for a hand-run walkthrough against a live course site.
 
-The gate in that diagram checks each step against the engine's own list of step kinds, not the
-list the workflow file declares. A workflow cannot widen what the engine is willing to do by
+The gate in that diagram checks each step against the engine's own list of step kinds. The list
+a workflow file declares is ignored. A workflow cannot widen what the engine is willing to do by
 naming a new kind of step: an unknown kind is denied, and the denial is the last row written.
 When you do authorize witnessed automated submission, the entry for that step carries a digest
 of the exact page state at the moment of submit, so the receipt records what was sent and not
@@ -342,16 +347,16 @@ every surface: knowledge open to anyone who can attain the means; acceptance
 decided by external checks, never reputation; every result re-runnable;
 honest nulls first-class; ownership earned by comprehension; learning woven
 into the work. The full text lives in [CREDO.md](CREDO.md).
-The long form of this belief: [The Unbundling](https://github.com/HarperZ9/flywheel/blob/fix/release-model-identity/docs/essays/2026-07-13-the-unbundling.md).
+The long form of this belief: [The Unbundling](https://github.com/HarperZ9/flywheel/blob/main/docs/essays/2026-07-13-the-unbundling.md).
 
 ---
 
-Built by **[Zain Dana Harper](https://harperz9.github.io)** in Seattle: evidence-first tools that leave a re-checkable artifact behind. The full workbench is at [Project Telos](https://harperz9.github.io).
+Built by **[Zain Dana Harper](https://harperz9.github.io)** in Seattle. More tools at [harperz9.github.io](https://harperz9.github.io).
 
 ## Local client packages
 
-The 2.3.0 GitHub release includes native Windows client packages. Marketplace
-acceptance remains a separate gate.
+The 2.3.0 GitHub release includes native Windows client packages. They are attached to the
+release and are not listed in any client marketplace.
 
 ### Installation
 
