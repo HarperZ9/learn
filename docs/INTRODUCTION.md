@@ -1,20 +1,15 @@
 # Introduction to learn
 
-`learn` is a command-line study engine that turns your own material, a course, a certification,
-or a stack of notes, into a runnable learning loop. It schedules reviews with spaced repetition,
-generates retrieval practice from your own drafts, tracks the misconceptions behind your wrong
-answers, gates readiness on prerequisites, and composes all of it into one study plan with a
-single command. A second engine automates course and certification logistics and halts at every
-graded step so the graded work stays yours. It is plain Node (version 20 or newer) with zero
-external dependencies: clone it, run it, nothing to build.
+`learn` is a command-line study planner. You give it the objectives of a course, a
+certification or a stack of notes, and record each practice attempt. It schedules reviews with
+spaced repetition, builds recall prompts from your own drafts, counts the mistakes behind your
+wrong answers, orders objectives by prerequisite, and combines all of it into one study plan.
+A second engine handles course and certification logistics and stops at every graded step for you
+to do yourself. It needs Node 20 or newer and has no dependencies.
 
-## Why it exists
-
-Course platforms automate logistics (next module, next quiz, next certificate) but never tell you
-whether you learned anything, and a generic AI tutor will hand you the answer if you ask twice.
-`learn` is built to be neither: it structures real practice from your own attempts, refuses to
-answer graded work, and writes a witnessed, re-checkable receipt that separates what the engine
-did from what you did. A mastery claim from `learn` is never just the tool's word.
+```bash
+npx -y @harperz9/learn@2.3.0 tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
+```
 
 ## Core concepts
 
@@ -29,7 +24,7 @@ did from what you did. A mastery claim from `learn` is never just the tool's wor
   0 to 4, `--use-fsrs --desired-retention 0.9`) that surfaces the item you are most likely to
   have forgotten. Either way, time is injected with `--now`, so schedules are deterministic.
 - **Misconception.** An aggregation of your wrong attempts and feedback per objective, ranked by
-  count, used to steer the next plan toward where you are actually weak.
+  count, used to steer the next plan toward where you are weak.
 - **Study plan.** `tutor study` composes due items, misconceptions, an interleaved practice
   order, prerequisite readiness, and the mastery verdict into one plan.
 - **Mastery gate.** `tutor mastery` derives a ready/not-yet verdict per objective from your
@@ -49,11 +44,11 @@ did from what you did. A mastery claim from `learn` is never just the tool's wor
 From a clone of the repository:
 
 ```bash
-node --test              # 284 tests should pass
+node --test              # the full suite should pass
 node src/cli.mjs doctor  # every integrity line should read MATCH
 ```
 
-Plan a session on something you are actually studying:
+Plan a session on something you are studying:
 
 ```bash
 node src/cli.mjs tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
