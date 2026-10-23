@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- README: the opening now says what learn does and who it is for, with an install and first run checked against the 2.3.0 package, a comparison with Anki, Mochi, RemNote and SuperMemo, and a list of limits. The npm description, author email and keywords match it.
+
 ## 2.3.0, 2026-10-03
 
 - Choice items (`learn-choice/1`, `src/tutor/choice.mjs`). A recall question keys one answer and names the misconception behind each wrong choice. `diagnoseChoice()` tells a wrong attempt which misconception it matches, using the same top levels as the arithmetic tree, and never returns the keyed answer. `doctor` checks that with a probe and a known-bad item.
