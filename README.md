@@ -19,7 +19,8 @@ terminal, and developers who want an agent to plan study sessions. learn never a
 question. A second engine handles course logistics, such as opening modules and moving between
 pages, and stops at every graded step for you to do yourself.
 
-Node 20 or newer, no dependencies, Fair Source licence (see [License](#license)).
+Node 20 or newer, no dependencies. Version 2.3.0 on npm is under a Fair Source licence; the
+next release is AGPL-3.0-only (see [License](#license)).
 
 ## Install and first run
 
@@ -280,8 +281,17 @@ SysWOW64 folders, and when it runs in one of them it skips no entry.
 
 ## License
 
-Fair Source (see [LICENSE](LICENSE)). The licence requires derivatives to keep the stop at
-graded assessments.
+GNU Affero General Public License, version 3 only (AGPL-3.0-only); see [LICENSE](LICENSE). You
+may use, study, change and share learn. If you run a changed version as a network service, you
+must offer its users the source of that version. Copyright (C) 2026 Zain Dana Harper.
+
+Version 2.3.0 and earlier releases were published under the Fair Source licence and keep it.
+AGPL-3.0-only applies from the next release.
+
+Graded assessments always halt for the human, and `doctor` checks that they do. Under the Fair
+Source licence this was a binding clause. AGPL-3.0 does not allow extra restrictions, so in this
+licence it is a design commitment of the project and its releases. Treat a fork that removes it
+as a different tool.
 
 ## For developers
 

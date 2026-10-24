@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Licence, 2026-10-23: the code moves from the Fair Source licence to the GNU Affero General Public License, version 3 only (AGPL-3.0-only), on the author's decision of that date. Every commit in the history is the author's own. Version 2.3.0 and every earlier release, on npm and as GitHub tags, keep the Fair Source licence; AGPL-3.0-only applies from the next release. `LICENSE`, `license` in `package.json` and `package-lock.json`, the README and the explainer page change with it. AGPL-3.0 allows no extra restrictions, so the old integrity clause (graded assessments always halt for the human) stops being a licence term and stays a design commitment that `doctor` checks.
 - README and docs introduction rewritten to open with what learn does and a command to run, with
   a shorter feature list and a short "Things to know" section. The npm description matches.
 
