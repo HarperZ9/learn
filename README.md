@@ -246,7 +246,7 @@ file. The MCP server never performs a course action or answers a graded step.
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 419 across the runtime, adapters, session records, tutor, telos interop, entry points
+- **Tests:** 448 across the runtime, adapters, session records, tutor, telos interop, entry points
   and security fixtures. Run them with `node --test`.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
 
