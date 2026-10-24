@@ -5,22 +5,22 @@
 
 # learn
 
-Turn your own material into a runnable course with spaced repetition.
+A study planner for the terminal and for agents over MCP. You list the objectives you are
+working toward and record each practice attempt. learn tells you what is due for review, which
+mistakes keep coming back, what order to practise in, and whether you have reached mastery on
+each objective.
 
-`learn` is a command-line study planner and a Node.js library. You name the objectives you are
-working toward and record each practice attempt you make. learn then tells you what is due for
-review, which mistakes keep coming back, what order to practise in, and whether you have reached
-mastery on each objective. Every plan and verdict comes from your own recorded attempts, and a
-receipt lets anyone re-derive the verdict later.
+```bash
+npx -y @harperz9/learn@2.3.0 tutor plan mysession --topic "derivatives" --objectives "power-rule,chain-rule"
+```
 
-It is for people studying for a course, an exam or a certification who are happy working in a
-terminal, and for developers who want an agent to plan study sessions over MCP without that agent
-ever answering a graded question for the learner. A second engine automates course logistics,
-such as opening modules and moving between pages, and always stops at a graded step so the work
-stays yours.
+It suits anyone studying for a course, an exam or a certification who is comfortable in a
+terminal, and developers who want an agent to plan study sessions. learn never answers a graded
+question. A second engine handles course logistics, such as opening modules and moving between
+pages, and stops at every graded step for you to do yourself.
 
-Node 20 or newer. No dependencies. Version 2.3.0 on npm, under a Fair Source licence; the next
-release is AGPL-3.0-only (see [License](#license)).
+Node 20 or newer, no dependencies. Version 2.3.0 on npm is under a Fair Source licence; the
+next release is AGPL-3.0-only (see [License](#license)).
 
 ## Install and first run
 
@@ -44,7 +44,7 @@ tutor study mysession: 1 due, 0 misconception(s), mastery not yet
   readiness: power-rule:unlocked, chain-rule:unlocked
 ```
 
-Record a wrong answer with a note on what went wrong, then write a receipt and check it:
+Record a wrong answer with a note on what went wrong, then save a record of the session and check it:
 
 ```text
 $ learn tutor record mysession --objective chain-rule --prompt "d/dx sin(x^2)" --answer "cos(x^2)" --correct false --feedback "forgot inner derivative"
@@ -63,7 +63,7 @@ tutor reverify mysession: VERIFIED (1 receipt(s))
 
 `--now` pins the clock so these outputs repeat exactly; leave it out to use the current time.
 To try it without installing, prefix any command with `npx -y @harperz9/learn@2.3.0` in place
-of `learn`. `learn doctor` re-runs the integrity checks and prints `MATCH` on every line.
+of `learn`. `learn doctor` runs the built-in self-checks and prints `MATCH` on every line.
 
 From a clone, the same commands run as `node src/cli.mjs`, and the examples in `examples/` (which
 the npm package does not include) work as written:
@@ -80,96 +80,77 @@ Sessions (`tutor/`) and runs (`runs/`) live in one state folder: `LEARN_HOME` wh
 otherwise `%LOCALAPPDATA%\learn` on Windows, `~/Library/Application Support/learn` on macOS, and
 `$XDG_DATA_HOME/learn` or `~/.local/share/learn` elsewhere. `learn status` prints the folder under
 `state`. Pass `--dir <folder>` to keep a project's sessions in a folder beside the project. Session
-and run ids use letters, digits and the characters `.`, `_` and `-` (up to 64, no leading `.` or `-`), and no
-file is ever written outside the state folder. Delete a session by deleting its files there.
+and run ids use letters, digits and the characters `.`, `_` and `-` (up to 64, no leading `.` or `-`), and learn
+writes nothing outside the state folder. Delete a session by deleting its files there.
 
 ## How it compares
 
-Anki, Mochi, RemNote and SuperMemo are flashcard and note apps. They give you a card editor,
-media, sync across devices and a review screen, and Anki ships the FSRS scheduler. learn has none
-of that. It works on objectives and on attempts you record from the command line or an agent, and
-it adds what card apps leave out: misconception counts per objective, a mastery gate that reads
-only your own graded attempts, prerequisite ordering, and receipts that re-derive their verdict
-from a hash-chained log. Use a card app to drill a deck; use learn when you want a scriptable plan
-and a checkable record of how you got to ready.
+Anki, Mochi, RemNote and SuperMemo are flashcard and note apps, with a card editor, media,
+device sync and a review screen. learn has none of those. It works on objectives and on attempts
+you record from the command line or an agent, and it adds misconception counts per objective, a
+mastery check per objective, and prerequisite ordering. Use a card app to drill a deck. Use learn
+when you want a study plan you can script.
 
-## Limits
+## Things to know
 
-- No card editor, no sync and no mobile app. You record attempts yourself, by command or through
-  the MCP server.
+- You record attempts yourself, by command or through the MCP server.
+- Mastery means at least three attempts on an objective and 80% correct by default. Those are
+  your own prompts, so a pass is a pass on them, not on the real exam.
 - The adaptive scheduler is a small FSRS-style model written for this package. It does not use
-  the reference FSRS parameters that Anki trains, and it is a scheduling hint only: it never
-  moves the mastery gate.
-- Mastery is a threshold on your recorded attempts: by default at least three attempts per
-  objective and 80% correct. It shows you passed your own prompts; it does not prove you would
-  pass the real exam.
-- Live course runs need a browser-control library that is not published, so outside the author's
-  machine the credential engine runs only with its offline test driver. The adapter pack holds no
-  graded logic and is not tested against live course sites in CI.
-- Self-explanation checking needs Crucible, a separate tool you install and point learn at. It
-  sorts the claims in your explanation into grounded, shaky and unverifiable against the sources
-  you cite; it does not judge whether your reasoning is sound.
+  Anki's trained FSRS parameters, and it only orders reviews; it never changes mastery.
+- Live course runs need a browser-control library that is not yet published. Without it the
+  course engine runs only with its offline test driver.
+- Checking a self-explanation needs [Crucible](https://github.com/HarperZ9/crucible) installed
+  separately. It sorts the claims in your explanation into grounded, shaky and unverifiable
+  against the sources you cite.
 
 ## Features
 
-- **One-command study plans.** `learn tutor study` composes what is due, what you keep getting
-  wrong, an interleaved practice order, prerequisite readiness, and the mastery verdict into a
-  single plan from your own recorded attempts.
-- **Adaptive per-item memory model** (opt-in). An FSRS-class scheduler tracks per-item difficulty,
-  stability, and retrievability, decays each item's recall probability on its own curve, and
-  surfaces the item you are most likely to have forgotten, against a retention target you set
-  (for example 90%). Grade each attempt 0 to 4. It is a scheduling hint, never a verdict: the
-  mastery gate reads only your witnessed attempts, so the schedule can never move the "ready" line.
-- **Spaced repetition by default.** An SM-2-lite/Leitner scheduler over your practice log;
-  `tutor due` reports which objectives are overdue, most-overdue first. Timestamps are injected
-  with `--now`, so every schedule is deterministic and re-checkable.
-- **Re-derivable schedule + per-learner fit.** `tutor derive-schedule` replays your witnessed
-  graded log to rebuild the FSRS scheduling state from scratch, then audits it against the cached
-  `itemState`: a stale or tampered cache is caught as `DRIFT` with a per-field diff, never silently
-  trusted. `--optimize` fits an advisory per-learner initial-difficulty prior from your own
-  accuracy; it never changes the audit verdict or the mastery gate.
-- **Retrieval practice from your own material.** Claims your own draft asserts become blanked
-  cloze prompts you answer from memory, each carrying its source so you check yourself after,
-  not before.
-- **Misconception targeting.** Your wrong attempts and your own feedback are aggregated per
-  objective, ranked by count, so the next session goes to your weakest objectives first.
-- **Choice items with named misconceptions.** A short recall question keys one answer and names
-  the misconception behind each wrong choice. A wrong attempt is told which misconception it
-  matches, never the keyed answer. Format and rules: `docs/CHOICE-ITEMS.md`.
-- **Runs in a browser.** `@harperz9/learn/browser` exports the practice, scheduling and diagnosis
-  functions with no Node built-ins, so a static page can import them with no bundler. Receipts,
-  the session store, the CLI and the MCP server stay Node-only.
-- **Predict-then-observe.** Record a prediction before you see a rendered aid or worked example,
-  then score it against what happened. A pending prediction is never silently counted correct.
-- **Self-explanation with a real check.** Your explanation of a concept is bucketed into grounded,
-  shaky, and unverifiable claims, so "explain it back" gets a checked result.
-- **Concept map with prerequisite gating.** Objectives (plain strings or `{id, text, requires}`)
-  get a topological learning path; you are never told to study something whose prerequisite you
-  have not passed.
-- **Proof-packet lessons.** `tutor prooflesson` turns a verified-claim packet (sources, hashes,
-  MATCH/DRIFT/UNVERIFIABLE verdict) into a lesson: a scaffold that prompts you to derive the
-  reasoning yourself, retrieval questions from the packet's own fields, and a binding to the
-  packet's verdict. A failed packet also yields a typed misconception record.
-- **Re-verifiable receipts.** `tutor reverify` recomputes a receipt's own evidence: the hash chain
-  must recompute (a break is typed `CHAIN_BROKEN`) and the mastery verdict must re-derive from
-  the recorded attempts (`VERDICT_MISMATCH` otherwise). A chainless receipt is `UNVERIFIED`,
-  never verified.
-- **Credential-logistics engine.** `learn run` executes a declarative course workflow and halts
-  at every step tagged `assess`, at sensitive fills (credentials, payment details, CAPTCHA), at
-  `submit` steps unless you chose witnessed automated submission, and at steps flagged `cost` or
-  `irreversible` unless you pass `--allow-cost`. A step tagged `assess` never auto-completes, in
-  either submission mode. The engine recognizes a graded page only when the workflow tags it.
-  The same holds for submits and fees: a final submit written as a plain `click` step, or a fee
-  without `cost`, runs as logistics, and the receipt lists it only as an ordinary step. Read a
-  workflow from someone else before you run it.
-- **Zero-dep MCP server.** `learn mcp` serves fifteen tools over stdio JSON-RPC for agent use:
-  thirteen read-only, and two (`learn_tutor_plan`, `learn_tutor_record`) that write session files
-  in your learn state folder. Actuation stays on the CLI.
+- **One-command study plans.** `learn tutor study` combines what is due, what you keep getting
+  wrong, an interleaved practice order, prerequisite readiness and the mastery result into one
+  plan.
+- **Spaced repetition.** An SM-2-lite/Leitner scheduler over your practice log by default.
+  `tutor due` lists overdue objectives, most overdue first. `--now` pins the clock so a schedule
+  repeats exactly.
+- **Adaptive per-item scheduling** (opt-in). An FSRS-style scheduler tracks difficulty and
+  stability per item and surfaces the one you are most likely to have forgotten, against a
+  retention target you set, such as 90%. Grade each attempt 0 to 4.
+- **Schedule rebuild.** `tutor derive-schedule` rebuilds the scheduler state from your attempt log
+  and reports any field where the saved state differs (`DRIFT`). `--optimize` fits a starting
+  difficulty to your own accuracy.
+- **Retrieval practice from your own notes.** Statements in your draft become fill-in-the-blank
+  prompts, each with its source so you can check your answer afterwards.
+- **Misconception tracking.** Wrong attempts and your notes on them are counted per objective, so
+  the next session starts with your weakest objectives.
+- **Choice items.** A short recall question keys one answer and names the misconception behind
+  each wrong choice. A wrong attempt is told which misconception it matches, never the keyed
+  answer. See `docs/CHOICE-ITEMS.md`.
+- **Runs in a browser.** `@harperz9/learn/browser` exports practice, scheduling and diagnosis with
+  no Node built-ins, so a static page can import them without a bundler. The session store, CLI
+  and MCP server stay Node-only.
+- **Predict, then observe.** Record a prediction before you see a worked example, then score it
+  against what happened. A prediction you have not scored counts for nothing.
+- **Explain it back.** Your explanation of a concept is split into grounded, shaky and
+  unverifiable claims (needs Crucible).
+- **Prerequisites.** Objectives can declare what they require (`{id, text, requires}`). learn
+  orders them and never schedules an objective before its prerequisites are passed.
+- **Lessons from claim packets.** `tutor prooflesson` turns a checked-claim packet into a lesson:
+  prompts to work through the reasoning yourself and recall questions drawn from the packet.
+- **Session records.** `tutor study-receipt` saves the session as a hash-chained log with its
+  mastery result. `tutor reverify` recomputes both and reports `VERIFIED`, `CHAIN_BROKEN`,
+  `VERDICT_MISMATCH` or `UNVERIFIED`.
+- **Course logistics engine.** `learn run` follows a JSON workflow through a course and stops at
+  every step tagged `assess`, at sensitive fills (credentials, payment details, CAPTCHA), at
+  `submit` steps unless you allow automated submission, and at steps flagged `cost` or
+  `irreversible` unless you pass `--allow-cost`. It recognizes a graded page, a submit or a fee
+  only when the workflow tags it, so read a workflow from someone else before you run it.
+- **MCP server.** `learn mcp` serves fifteen tools over stdio. Thirteen only read; two
+  (`learn_tutor_plan`, `learn_tutor_record`) write session files in your state folder.
 
 ## See it work, step by step
 
 The [animated explainer](https://harperz9.github.io/repo-explainers/learn.html)
-walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery gate, a receipt that re-derives its verdict under two kinds of tampering, and the course workflow halting at its graded step. Every value on it is output from this repository. Its
+walks through a derivatives session: planning, recording attempts, the study plan, a misconception, the mastery check, the session record under two kinds of tampering, and the course workflow stopping at its graded step. Its
 source is [docs/explainer/index.html](docs/explainer/index.html).
 
 ## Adaptive scheduling
@@ -183,14 +164,14 @@ node src/cli.mjs tutor record sess --objective identity --grade 3 --now 2026-06-
 node src/cli.mjs tutor study sess --now 2026-07-15T00:00:00Z --use-fsrs --desired-retention 0.9
 ```
 
-The flags are advisory: on a session created without `--enable-fsrs` they fall back to the
-Leitner/interleave path.
+On a session created without `--enable-fsrs`, these flags fall back to the default Leitner
+scheduler.
 
 ## A worked session
 
 <p align="center"><img src="docs/art/study-loop.svg" alt="A study session in eight stages: objectives, due, misconceptions, order, practice, record, mastery gate, receipt. The gate reads only recorded attempts, and not-ready names the weak objectives and sends them back to practice." width="100%"></p>
 
-Record a wrong attempt with feedback, watch the plan shift, then emit and re-verify a receipt:
+Record a wrong attempt with feedback, see the plan change, then save the session record and check it:
 
 ```bash
 node src/cli.mjs tutor record mysession --objective chain-rule \
@@ -206,26 +187,16 @@ node src/cli.mjs tutor reverify mysession
 # tutor reverify mysession: VERIFIED (1 receipt(s))
 ```
 
-The misconception now steers the next `tutor study` plan. The receipt re-verifies by recomputing
-its own recorded evidence; a stored true/false flag counts for nothing.
-
-Here is the record that last command hands back, drawn field by field:
+The misconception now moves chain-rule up the next `tutor study` plan. `tutor reverify`
+recomputes the hash chain and the mastery result from the saved attempts. This is the record it
+returns:
 
 <p align="center"><img src="docs/art/reverify-record.svg" alt="The record learn returns when it re-verifies one of its own receipts, drawn one field to a row, with what comes back in each and how a reader would check it. verdict has three readings and no fourth, and it keys off recomputed evidence rather than the receipt's own claim to be verified. failures carries a typed code: a broken hash chain names the entry it broke at, and a verdict mismatch carries the stored reading against the re-derived one. reasons is filled only when the receipt cannot be checked at all. summary.entries is the hash-chained practice log the verdict is re-derived from. summary.storedReady is the verdict as written, summary.rederivedReady is the verdict recomputed from the receipt's own attempts under its own recorded policy, and a disagreement between the two is the mismatch. witness.digest is the content address of the re-check itself." width="100%"></p>
 
-The drawing is rendered from the same spec the artwork checker reads, and the test suite holds
-every reading in it against records the re-verifier returns, so it cannot go quietly out
-of date.
+## The course engine
 
-The ordering in the middle of that diagram is what makes the rest of it true. An attempt is
-appended to the hash chain first, and the per-item scheduling state is derived from it after.
-The witnessed log is the record; the schedule is a hint layered on top of it. That is why the
-scheduler can reorder your session and still have no way to move the ready line.
-
-## The credential engine
-
-The second engine turns a declarative workflow into a witnessed run: navigate a course, open a
-module, reach a graded step.
+The second engine follows a JSON workflow through a course: navigate, open a module, stop at
+the graded step.
 
 <p align="center"><img src="docs/art/run-lane.svg" alt="A course run in eight stages: workflow, gate, actuate, witness, ledger, halt, attest, receipt. A graded step always halts, and your attestation is appended to the same hash chain as its own row." width="100%"></p>
 
@@ -238,7 +209,7 @@ node src/cli.mjs receipt run1
 
 At every `assess` step it halts and waits for you, and it halts the same way at sensitive fills,
 at `submit` steps and at steps flagged `cost` or `irreversible`. When you resume, your attestation
-is recorded with its time, alongside every step the engine performed. A resume keeps the
+is logged with its time, next to every step the engine took. A resume keeps the
 submission mode the run started with; `--submit witnessed-auto` on `run` or on a resume lets the
 engine click submit, and `--allow-cost` on the invocation that reaches a cost step lets it perform
 that step. Each grant is named in the ledger entry of the step it allowed. Drivers: `FakeDriver` (offline, deterministic) and `NativeDriver` (real browser over
@@ -246,12 +217,9 @@ native-control, a browser-control library that is not published). An adapter pac
 Microsoft Learn, NonprofitReady, and generic self-paced courses, with no graded logic anywhere.
 See [docs/smoke.md](docs/smoke.md) for a hand-run walkthrough against a live course site.
 
-The gate in that diagram checks each step against the engine's own list of step kinds. The list
-a workflow file declares is ignored. A workflow cannot widen what the engine is willing to do by
-naming a new kind of step: an unknown kind is denied, and the denial is the last row written.
-When you do authorize witnessed automated submission, the entry for that step carries a digest
-of the exact page state at the moment of submit, so the receipt records what was sent and not
-just that something was.
+The engine runs only the step kinds it knows. A workflow cannot add new ones: an unknown step
+kind is refused and the run stops there. When you allow automated submission, the log entry for
+that step stores a digest of the page at the moment of submit.
 
 ## MCP server
 
@@ -268,7 +236,7 @@ state folder, and `learn_tutor_plan` will not replace an existing session unless
 `replace: true`. Every id and path argument stays inside the state folder; workflows and proof
 packets can also be passed inline. A failed call returns `isError: true` with a code
 (`INVALID_ARGUMENT`, `NOT_FOUND`, `CONFLICT`, `INTERNAL`) and a fixed message that never quotes a
-file. The MCP surface never performs a real course action or answers a graded step.
+file. The MCP server never performs a course action or answers a graded step.
 
 ## Status
 
@@ -278,41 +246,27 @@ file. The MCP surface never performs a real course action or answers a graded st
   `learn assist`, `learn visualize`, and `learn tutor <plan|record|mastery|receipt|reverify|
   prooflesson|due|misconceptions|retrieval|explain|predict|score|path|study|study-receipt|
   derive-schedule>`.
-- **Tests:** 419 across the runtime, adapters, receipt, tutor/learning-loop, telos interop, entry
-  points and security fixtures, including a falsifiable test per integrity invariant. `learn
-  doctor` re-checks the invariants at runtime and must report `MATCH` on every line.
+- **Tests:** 419 across the runtime, adapters, session records, tutor, telos interop, entry points
+  and security fixtures. Run them with `node --test`.
 - **History:** [CHANGELOG.md](CHANGELOG.md).
-
-## Integrity boundary
-
-`learn` never produces, hints, or auto-fills an answer to a graded assessment; the `mastery()`
-verdict is a function of your own scored practice attempts only, never of a render, a
-visualization, or a pending prediction. Every run writes a witnessed, hash-chained receipt that
-separates automated logistics from your own graded work, and `tutor reverify` re-checks a receipt
-from its recorded evidence. If you can get any command to cross that line, that is the most useful
-bug report this tool can receive: every such path has a falsifiable test.
 
 ## Docs
 
 - [docs/INTRODUCTION.md](docs/INTRODUCTION.md): what `learn` is, core concepts, and a
   first-ten-minutes walkthrough.
-- [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md): the study loop step by step: plan, due, retrieval,
-  predict-then-observe, self-explanation, misconceptions, mastery-gate, witnessed receipt.
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the accountability spine (witness, ledger, gate)
-  and how both engines are built from it.
+- [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md): the study loop step by step.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how both engines are built.
 - [USAGE.md](USAGE.md): install and basic usage for both engines and the MCP surface.
-- [docs/ENTERPRISE-READINESS.md](docs/ENTERPRISE-READINESS.md): context-envelope and
-  action-receipt contract for unattended agent workflows.
-- [docs/smoke.md](docs/smoke.md): operator-run live-LMS smoke test.
+- [docs/ENTERPRISE-READINESS.md](docs/ENTERPRISE-READINESS.md): running learn inside unattended
+  agent workflows.
+- [docs/smoke.md](docs/smoke.md): a hand-run test against a live course site.
 - [AGENTS.md](AGENTS.md): scope, developer contract, and verification commands.
 - [CONTRIBUTING.md](CONTRIBUTING.md) and [AUTHORS.md](AUTHORS.md).
-- [docs/brand/README.md](docs/brand/README.md): brand assets (`docs/brand/learn-hero.png`,
-  `docs/brand/learn-hero.svg`, `docs/brand/learn-mark.svg`) and their provenance.
+- [docs/brand/README.md](docs/brand/README.md): brand assets.
 
-Peer tools: [gather](https://github.com/HarperZ9/gather) (source receipts) and
-[crucible](https://github.com/HarperZ9/crucible) (measured claim evaluation) power the assist
-pillar; [telos](https://github.com/HarperZ9/telos) renders math/physics concepts as witnessed
-learning aids via its `math_physics` lane. Point learn at them with `LEARN_CRUCIBLE_CMD`,
+Optional companion tools: [gather](https://github.com/HarperZ9/gather) collects sources and
+[crucible](https://github.com/HarperZ9/crucible) checks claims for `learn assist`;
+[telos](https://github.com/HarperZ9/telos) renders math and physics concepts as visual aids. Point learn at them with `LEARN_CRUCIBLE_CMD`,
 `LEARN_GATHER_CMD` and `LEARN_TELOS_CMD`, each a JSON argv array such as
 `["python", "-m", "crucible"]` with absolute paths for any file. Each child starts in a private
 empty folder with a short environment allowlist; name any other variable it needs in
@@ -341,22 +295,12 @@ as a different tool.
 
 ## For developers
 
-Keep the public README, package metadata, and examples aligned with current behavior. Before
-opening a PR, run the full suite.
+Run the suite and the self-check before opening a PR.
 
 ```bash
 node --test
 node src/cli.mjs doctor
 ```
-
-## What this believes
-
-This tool is one lane of a family that holds a single belief steady across
-every surface: knowledge open to anyone who can attain the means; acceptance
-decided by external checks, never reputation; every result re-runnable;
-honest nulls first-class; ownership earned by comprehension; learning woven
-into the work. The full text lives in [CREDO.md](CREDO.md).
-The long form of this belief: [The Unbundling](https://github.com/HarperZ9/flywheel/blob/main/docs/essays/2026-07-13-the-unbundling.md).
 
 ---
 

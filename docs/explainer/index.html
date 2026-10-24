@@ -165,7 +165,7 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
 <header class="top wrap">
   <div class="crumbs"><a href="https://github.com/HarperZ9/learn">HarperZ9/learn</a><span>Explainer, built from commit <a href="https://github.com/HarperZ9/learn/tree/a3abd8c6f263e0f0523c634034cade201488425e">a3abd8c</a></span><a href="https://harperz9.github.io/repo-explainers.html">All repository explainers</a><button type="button" class="btn theme" data-theme-toggle>Dark page</button></div>
   <h1>learn</h1>
-  <p class="lede">Turn your own material into a study loop that never takes the test for you.</p>
+  <p class="lede">Turn your own material into a study loop. You take the test; learn tracks the practice.</p>
 </header>
 <main id="main">
 <section class="block wrap" aria-labelledby="for-you">
@@ -184,7 +184,7 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
 
 <section class="block wrap" aria-labelledby="how">
   <h2 id="how">How it works, one step at a time</h2>
-  <p class="measure">Scroll, or use the step buttons. The panel follows a derivatives session through the <code>learn tutor</code> commands, then the bundled course workflow. Every line is output from learn at commit a3abd8c, run with Node and no network.</p>
+  <p class="measure">Scroll, or use the step buttons. The panel follows a derivatives session through the <code>learn tutor</code> commands, then the bundled course workflow. Every line is output from learn at commit a3abd8c, run offline with Node.</p>
   <div class="walk">
     <div class="stage-wrap">
       <div class="stage" aria-label="Animated diagram for the current step">
@@ -210,7 +210,7 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
       </div></li>
       <li class="step" tabindex="-1" data-scene="k1" data-state="s"><div class="card">
         <span class="num">02</span><h3>Record an attempt, then ask what to study</h3>
-        <p>You answer <code>d/dx x^3</code> with <code>3x^2</code> and record it as correct. <code>tutor study</code> then builds the plan: the chain rule is due because you have not practised it, the order mixes both, and both are unlocked because neither has a prerequisite.</p>
+        <p>You answer <code>d/dx x^3</code> with <code>3x^2</code> and record it as correct. <code>tutor study</code> then builds the plan: the chain rule is due because it has zero attempts, the order mixes both, and both are unlocked because both have an empty prerequisite list.</p>
         <p>Times are passed in with <code>--now</code>, so the same log always gives the same schedule.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/src/tutor/study.mjs">src/tutor/study.mjs</a>, <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/src/tutor/schedule.mjs">src/tutor/schedule.mjs</a></p>
       </div></li>
@@ -221,20 +221,20 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
       </div></li>
       <li class="step" tabindex="-1" data-scene="k3" data-state="s"><div class="card">
         <span class="num">04</span><h3>The mastery gate</h3>
-        <p>Mastery is ready only when every objective has at least 3 attempts at 80% accuracy or better. One perfect attempt is not enough, and a 50% objective holds the whole session back. The command exits 1 until the gate opens.</p>
-        <p>Pick the state of the log in the panel. The scheduler can suggest what to practise, but it cannot move this line: only your scored attempts can.</p>
+        <p>Mastery is ready when every objective has at least 3 attempts at 80% accuracy or better. A single perfect attempt counts as one of the three, and a 50% objective holds the whole session back. The command exits 1 until the gate opens.</p>
+        <p>Pick the state of the log in the panel. The scheduler suggests what to practise; your scored attempts move this line.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/src/tutor/session.mjs">src/tutor/session.mjs</a>, <code>mastery</code></p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="k4" data-state="s"><div class="card">
         <span class="num">05</span><h3>A receipt you can re-derive</h3>
         <p><code>tutor study-receipt</code> writes the plan with its practice entries in a hash chain and the mastery verdict with the policy that produced it. <code>tutor reverify</code> recomputes the chain and re-derives the verdict from the receipt's own entries.</p>
-        <p>Edit one recorded attempt and the chain breaks, and the verdict no longer follows from the entries. Edit only the verdict and it no longer matches what the entries give. Pick each case in the panel.</p>
+        <p>Edit one recorded attempt and reverify reports both <code>CHAIN_BROKEN</code> and <code>VERDICT_MISMATCH</code>. Edit the verdict alone and it reports <code>VERDICT_MISMATCH</code>. Pick each case in the panel.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/src/tutor/reverify.mjs">src/tutor/reverify.mjs</a></p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="k5" data-state="s"><div class="card">
         <span class="num">06</span><h3>Course logistics halt at the graded step</h3>
         <p>The second engine runs a declarative course workflow. The bundled example navigates to a course, waits for module 1, clicks start and captures the page. Step 4 is tagged <code>assess</code>, a quiz, so the engine halts there and waits for you.</p>
-        <p>Once you resume, it completes and the run's ledger verifies. A step tagged <code>assess</code> never completes on its own.</p>
+        <p>Once you resume, it completes and the run's ledger verifies. An <code>assess</code> step completes when you resume it.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/examples/course.json">examples/course.json</a>, <a href="https://github.com/HarperZ9/learn/blob/a3abd8c6f263e0f0523c634034cade201488425e/examples/demo.mjs">examples/demo.mjs</a>; README.md, "Credential-logistics engine"</p>
       </div></li>
     </ol>
@@ -262,12 +262,12 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
 </section>
 
 <section class="block wrap" aria-labelledby="limits">
-  <h2 id="limits">What it does not do</h2>
+  <h2 id="limits">Scope</h2>
   <ul class="limits">
-    <li>learn grades nothing for you. An attempt is marked correct or wrong by you, and the mastery gate reads those marks.</li>
-    <li>The adaptive scheduler is a hint. It can reorder practice; it never changes the mastery verdict.</li>
-    <li>The course engine recognises a graded page only when the workflow tags it <code>assess</code>. An untagged submit or fee runs as an ordinary step, so read a workflow from someone else before you run it.</li>
-    <li>A verified receipt shows the verdict follows from the recorded attempts. It does not show the attempts were honest.</li>
+    <li>You mark each attempt correct or wrong, and the mastery gate reads those marks.</li>
+    <li>The adaptive scheduler is a hint. It reorders practice, and the mastery verdict comes from your marks.</li>
+    <li>The course engine halts at a graded page when the workflow tags it <code>assess</code>. Read a workflow from someone else before you run it, so you know which submits and fees carry a tag.</li>
+    <li>A verified receipt shows the verdict follows from the recorded attempts. The honesty of those attempts rests with the person who recorded them.</li>
   </ul>
   <p class="src">Source: README.md at a3abd8c, "Features"; src/tutor/session.mjs and src/tutor/reverify.mjs</p>
 </section>
@@ -275,10 +275,10 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
 <section class="block wrap recall" aria-labelledby="recall">
   <h2 id="recall">Check what stuck</h2>
   <p class="measure">Answer each one in your head before you open it.</p>
-  <details><summary>Why does one perfect attempt not open the mastery gate?</summary><p>The default gate needs at least 3 attempts per objective as well as 80% accuracy.</p></details>
-  <details><summary>Can the scheduler move a session to READY?</summary><p>No. Only your scored attempts can. The scheduler only suggests what to practise next.</p></details>
-  <details><summary>You flip one recorded attempt inside a receipt. Which two failures does reverify report?</summary><p>CHAIN_BROKEN, because the hash chain no longer recomputes, and VERDICT_MISMATCH, because the stored verdict no longer follows from the entries.</p></details>
-  <details><summary>What does the course engine do at a step tagged assess?</summary><p>It halts and waits for you. It never completes that step itself.</p></details>
+  <details><summary>You have one perfect attempt. Why is the mastery gate still closed?</summary><p>The default gate needs at least 3 attempts per objective as well as 80% accuracy.</p></details>
+  <details><summary>Can the scheduler move a session to READY?</summary><p>No. Your scored attempts move it. The scheduler suggests what to practise next.</p></details>
+  <details><summary>You flip one recorded attempt inside a receipt. Which two failures does reverify report?</summary><p>CHAIN_BROKEN, because the hash chain recomputes to a different value, and VERDICT_MISMATCH, because the entries now give a different verdict from the stored one.</p></details>
+  <details><summary>What does the course engine do at a step tagged assess?</summary><p>It halts and waits for you to do the step and resume.</p></details>
 </section>
 </main>
 <footer class="foot wrap">
