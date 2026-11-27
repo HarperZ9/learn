@@ -28,6 +28,8 @@ next release is AGPL-3.0-only (see [License](#license)).
 npm install -g @harperz9/learn@2.3.0
 ```
 
+mcp-name: io.github.harperz9/learn
+
 Plan a session, record one attempt, and ask what to study next:
 
 ```text
