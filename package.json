@@ -1,5 +1,6 @@
 {
   "name": "@harperz9/learn",
+  "mcpName": "io.github.harperz9/learn",
   "version": "2.3.0",
   "type": "module",
   "description": "Study planner for the terminal and MCP: schedules reviews, tracks repeat mistakes and checks mastery from the attempts you record. Leaves graded questions to you.",
