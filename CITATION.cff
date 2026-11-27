@@ -11,6 +11,7 @@ authors:
     orcid: "https://orcid.org/0009-0001-7175-5393"
 repository-code: "https://github.com/HarperZ9/learn"
 url: "https://harperz9.github.io/learn.html"
+license: AGPL-3.0-only
 license-url: "https://github.com/HarperZ9/learn/blob/main/LICENSE"
 keywords:
   - cli
